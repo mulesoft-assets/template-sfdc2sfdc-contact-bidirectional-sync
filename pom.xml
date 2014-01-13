@@ -329,6 +329,7 @@
 			<version>${mule.version}</version>
 			<scope>provided</scope>
 		</dependency>
+		
 		<!-- Xml configuration -->
 		<dependency>
 			<groupId>org.mule.modules</groupId>
@@ -347,7 +348,6 @@
 			<artifactId>mule-module-data-mapper</artifactId>
 			<version>${mule.version}</version>
 		</dependency>
-		<!-- Xml configuration -->
 		<dependency>
 			<groupId>com.mulesoft.muleesb.modules</groupId>
 			<artifactId>mule-module-spring-config-ee</artifactId>
@@ -484,6 +484,13 @@
 	        <artifactId>mule-interceptor-module</artifactId>
 	        <version>${munit.version}</version>
 	        <scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>commons-cli</groupId>
+			<artifactId>commons-cli</artifactId>
+			<version>1.1</version>
+		    <scope>test</scope>
 		</dependency>
 	</dependencies>
 
