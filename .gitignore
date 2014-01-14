@@ -48,6 +48,9 @@ local.properties
 target/
 **/*.mflow
 
+# Ignore needed until STUDIO-4317 is closed
+src/main/app/test-flows.xml
+
 # --------------- #
 # Mule-specific #
 # --------------- #
@@ -62,3 +65,4 @@ src/test/resources/mule.test.properties
 # System files #
 # ------------ #
 **.DS_Store
+
