@@ -19,6 +19,7 @@
 		<jdk.version>1.6</jdk.version>
 		<junit.version>4.9</junit.version>
 		<munit.version>3.4-M4</munit.version>
+		<sfdc.version>5.4.3</sfdc.version>
 	</properties>
 
 	<build>
@@ -102,6 +103,12 @@
 				<extensions>true</extensions>
 				<configuration>
 					<copyToAppsDirectory>true</copyToAppsDirectory>
+					<inclusions>
+						<inclusion>
+							<groupId>org.mule.modules</groupId>
+							<artifactId>mule-module-sfdc</artifactId>
+						</inclusion>
+					</inclusions>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -426,7 +433,11 @@
 		</dependency>
 
 		<!-- Connectors -->
-
+		<dependency>
+			<groupId>org.mule.modules</groupId>
+			<artifactId>mule-module-sfdc</artifactId>
+			<version>${sfdc.version}</version>
+		</dependency>
 
 		<!-- for testing -->
 		<dependency>
