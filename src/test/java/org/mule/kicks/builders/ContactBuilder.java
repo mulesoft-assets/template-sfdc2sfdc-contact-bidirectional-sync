@@ -3,6 +3,8 @@ package org.mule.kicks.builders;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.collections.MapUtils;
+
 public class ContactBuilder {
 
 	private Map<String, String> fields;
@@ -11,16 +13,13 @@ public class ContactBuilder {
 		this.fields = new HashMap<String, String>();
 	}
 	
-	public ContactBuilder(ContactBuilder original) {
-		this.fields = original.fields;
-	}
-
 	public static ContactBuilder aContact() {
 		return new ContactBuilder();
 	}
 	
 	public ContactBuilder with(String field, String value) {
-		ContactBuilder contactCopy = new ContactBuilder(this);
+		ContactBuilder contactCopy = new ContactBuilder();
+		contactCopy.fields.putAll(this.fields);
 		contactCopy.fields.put(field, value);
 		return contactCopy;
 	}
