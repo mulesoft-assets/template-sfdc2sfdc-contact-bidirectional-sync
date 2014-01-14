@@ -2,12 +2,15 @@ package org.mule.kicks.integration;
 
 import static org.mule.kicks.builders.ContactBuilder.aContact;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mule.MessageExchangePattern;
+import org.mule.api.MuleEvent;
 import org.mule.api.lifecycle.InitialisationException;
 import org.mule.construct.Flow;
 import org.mule.kicks.builders.ContactBuilder;
@@ -20,12 +23,8 @@ import org.mule.processor.chain.SubflowInterceptingChainLifecycleWrapper;
  */
 public class BidirectionalContactSyncTestIT extends AbstractKickTestCase {
 
-	private static SubflowInterceptingChainLifecycleWrapper checkContactflow;
-	
 	@Before
 	public void setUp() throws InitialisationException {
-		SubflowInterceptingChainLifecycleWrapper flow = getSubFlow("createContactFlow");
-		flow.initialise();
 	}
 
 	@After
@@ -34,6 +33,7 @@ public class BidirectionalContactSyncTestIT extends AbstractKickTestCase {
 
 	@Test
 	public void whenUpdatingAContactInSourceSystemTheBelongingContactgetsUpdatedInTargetSystem() throws Exception {
+		
 		// Preparation
 		ContactBuilder johnDoe = aContact()
 				.with("FirstName", "John")
@@ -47,13 +47,22 @@ public class BidirectionalContactSyncTestIT extends AbstractKickTestCase {
 				.with("Description", "John Doe is the man!")
 				.build();
 		
+		List<Map<String, String>> systemAContacts = new ArrayList<Map<String, String>>();
+		systemAContacts.add(johnDoeWithBasicDescription);
+		
+		List<Map<String, String>> systemBContacts = new ArrayList<Map<String, String>>();
+		systemBContacts.add(johnDoeWithUpdatedDescription);
+		
+		SubflowInterceptingChainLifecycleWrapper createContactFlow = getSubFlow("createContactFlowInAFlow");
+		createContactFlow.initialise();
+		createContactFlow.process(getTestEvent(systemAContacts, MessageExchangePattern.REQUEST_RESPONSE));
+		
 		// Execution
-		Flow flow = getFlow("mainFlow");
-		flow.process(getTestEvent("Hello!", MessageExchangePattern.REQUEST_RESPONSE));
-
+		Flow mainFlow = getFlow("mainFlow");
+		mainFlow.process(getTestEvent("Hello!", MessageExchangePattern.REQUEST_RESPONSE));
 
         // Assertions
-
+		
 	}
 
 }
