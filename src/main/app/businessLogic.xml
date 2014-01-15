@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule 
+	xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" 
+	xmlns="http://www.mulesoft.org/schema/mule/core" 
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" 
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/objectstore http://www.mulesoft.org/schema/mule/objectstore/current/mule-objectstore.xsd" version="EE-3.5.0">
+    
+    <objectstore:config name="ObjectStore" doc:name="ObjectStore" objectStore-ref="_defaultInMemoryObjectStore"/>
+    
+    <flow name="getUpdatedContactsInSystemAFlow" doc:name="getUpdatedContactsInSystemAFlow" processingStrategy="synchronous">
+        <poll doc:name="Poll">
+            <fixed-frequency-scheduler frequency="60000"/>
+			<!-- Llamada al semaforo -->
+        </poll>
+        <!-- choice en base al boleano -->
+        	<flow-ref name="mainFlow" doc:name="Flow Reference to mainFlow"/>
+    </flow>
+    
+    <flow name="getUpdatedContactsInSystemBFlow" doc:name="getUpdatedContactsInSystemBFlow" processingStrategy="synchronous">
+        <poll doc:name="Poll">
+            <fixed-frequency-scheduler frequency="6000"/>
+        </poll>
+        <flow-ref name="mainFlow" doc:name="Flow Reference to mainFlow"/>
+    </flow>
+    
+    <flow name="mainFlow" processingStrategy="synchronous" doc:name="mainFlow">
+        <flow-ref name="getContactsToBeSyncedFlow" doc:name="Flow Reference to getContactsToBeSyncedFlow"/>
+        <exception-strategy ref="defaultChoiceExceptionStrategy" doc:name="Reference Exception Strategy"/>
+    </flow>
+    <flow name="getObjectsToBeSyncedFlow" doc:name="getObjectsToBeSyncedFlow"/>
+    
+</mule>
