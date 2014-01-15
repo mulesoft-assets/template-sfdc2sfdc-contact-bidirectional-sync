@@ -1,26 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule 
-	xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" 
-	xmlns="http://www.mulesoft.org/schema/mule/core" 
-	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" 
-	xmlns:spring="http://www.springframework.org/schema/beans" 
+<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" 	xmlns="http://www.mulesoft.org/schema/mule/core" 
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:spring="http://www.springframework.org/schema/beans" 
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
 http://www.mulesoft.org/schema/mule/objectstore http://www.mulesoft.org/schema/mule/objectstore/current/mule-objectstore.xsd" version="EE-3.5.0">
     
-    <flow name="mainFlow" processingStrategy="synchronous" doc:name="mainFlow">
-        <flow-ref name="getContactsToBeSyncedFlow" doc:name="Flow Reference to getContactsToBeSyncedFlow"/>
-        <foreach doc:name="For Each contact to be synced">
-            <flow-ref name="updateContactFlow" doc:name="Flow Reference to updateContactFlow"/>
-        </foreach>
-
+    <flow name="mainFlow" processingStrategy="synchronous" doc:name="mainFlow"><set-variable variableName="semaphoreStatus" value="#[app.registry['PollSemaphore'].red()]" doc:name="Try to gain access to the Semaphore"/>
+        <!-- choice based on semaphore boolean -->
+        <choice doc:name="Choice">
+        	<when expression="flowVars['semaphoreStatus'] == false">
+				<foreach doc:name="For Each contact to be synced">
+					<flow-ref name="updateContactFlow" doc:name="call updateContactFlow"/>
+				</foreach>
+        	</when>
+        	<otherwise>
+        		<logger level="INFO" message="Semaphore taken skiping run." doc:name="Logger"/>
+        	</otherwise>
+        </choice>
         <exception-strategy ref="defaultChoiceExceptionStrategy" doc:name="Reference Exception Strategy"/>
     </flow>
-    
-    <flow name="getContactsToBeSyncedFlow" doc:name="getContactsToBeSyncedFlow"/>
     <flow name="updateContactFlow" doc:name="updateContactFlow"/>
     
 </mule>
