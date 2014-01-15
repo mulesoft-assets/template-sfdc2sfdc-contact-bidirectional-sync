@@ -13,6 +13,8 @@ http://www.springframework.org/schema/context http://www.springframework.org/sch
 
     <context:property-placeholder location="common.properties, mule.${mule.env}.properties"/>
     
+    <objectstore:config name="ObjectStore" doc:name="ObjectStore" objectStore-ref="_defaultInMemoryObjectStore"/>
+    
     <sfdc:config name="SalesforceA" username="${sfdc.a.username}" password="${sfdc.a.password}" securityToken="${sfdc.a.securityToken}" url="${sfdc.a.url}" doc:name="Salesforce" >
         <sfdc:connection-pooling-profile initialisationPolicy="INITIALISE_ONE" exhaustedAction="WHEN_EXHAUSTED_GROW"/>
     </sfdc:config>
