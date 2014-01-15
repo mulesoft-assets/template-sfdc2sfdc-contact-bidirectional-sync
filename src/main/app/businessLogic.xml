@@ -13,8 +13,14 @@ http://www.mulesoft.org/schema/mule/objectstore http://www.mulesoft.org/schema/m
     
     <flow name="mainFlow" processingStrategy="synchronous" doc:name="mainFlow">
         <flow-ref name="getContactsToBeSyncedFlow" doc:name="Flow Reference to getContactsToBeSyncedFlow"/>
+        <foreach doc:name="For Each contact to be synced">
+            <flow-ref name="updateContactFlow" doc:name="Flow Reference to updateContactFlow"/>
+        </foreach>
+
         <exception-strategy ref="defaultChoiceExceptionStrategy" doc:name="Reference Exception Strategy"/>
     </flow>
-    <flow name="getObjectsToBeSyncedFlow" doc:name="getObjectsToBeSyncedFlow"/>
+    
+    <flow name="getContactsToBeSyncedFlow" doc:name="getContactsToBeSyncedFlow"/>
+    <flow name="updateContactFlow" doc:name="updateContactFlow"/>
     
 </mule>
