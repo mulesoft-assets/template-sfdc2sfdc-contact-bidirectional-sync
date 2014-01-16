@@ -13,7 +13,7 @@ http://www.mulesoft.org/schema/mule/objectstore http://www.mulesoft.org/schema/m
         <choice doc:name="Choice">
         	<when expression="flowVars['semaphoreStatus'] == false">
 				<foreach doc:name="For Each contact to be synced">
-					<flow-ref name="updateContactFlow" doc:name="call updateContactFlow"/>
+					<flow-ref name="synchronizeFlow" doc:name="call syncrhonizeFlow"/>
 				</foreach>
         	</when>
         	<otherwise>
@@ -22,6 +22,27 @@ http://www.mulesoft.org/schema/mule/objectstore http://www.mulesoft.org/schema/m
         </choice>
         <exception-strategy ref="defaultChoiceExceptionStrategy" doc:name="Reference Exception Strategy"/>
     </flow>
-    <flow name="updateContactFlow" doc:name="updateContactFlow"/>
+    <sub-flow name="synchronizeFlow" doc:name="synchronizeFlow">
+        <flow-ref name="checkDoNotSyncMarkFlow" doc:name="call checkDoNotSyncMarkFlow"/>
+        <choice doc:name="Choice">
+            <when expression="">
+                <flow-ref name="queryContactInBFlow" doc:name="call queryContactInBFlow"/>
+                <choice doc:name="Choice">
+                    <when expression="">
+                        <flow-ref name="createContactInBFlow" doc:name="call createContactInBFlow"/>
+                        <flow-ref name="putDoNotSyncMarkFlow" doc:name="call putDoNotSyncMarkFlow"/>
+                    </when>
+                </choice>
+            </when>
+            <otherwise>
+                <flow-ref name="removeDoNotSyncMarkFlow" doc:name="call removeDoNotSyncMarkFlow"/>
+            </otherwise>
+        </choice>
+    </sub-flow>
+    <sub-flow name="checkDoNotSyncMarkFlow" doc:name="checkDoNotSyncMarkFlow"/>
+    <sub-flow name="removeDoNotSyncMarkFlow" doc:name="removeDoNotSyncMarkFlow"/>
+    <sub-flow name="putDoNotSyncMarkFlow" doc:name="putDoNotSyncMarkFlow"/>
+    <sub-flow name="queryContactInBFlow" doc:name="queryContactInBFlow"/>
+    <sub-flow name="createContactInBFlow" doc:name="createContactInBFlow"/>
     
 </mule>
