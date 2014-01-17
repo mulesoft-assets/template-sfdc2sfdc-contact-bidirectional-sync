@@ -6,13 +6,13 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
 http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
 
-	<!-- 	In this file you should declare all your inbound endpoints and from here controll the access to your application -->
+	<!-- 	In this file you should declare all your inbound endpoints and from here control the access to your application -->
 
     <flow name="triggerSyncronizationFromSalesForceInstanceAFlow" doc:name="triggerSyncronizationFromSalesForceInstanceAFlow" processingStrategy="synchronous">
         <poll doc:name="Poll">
             <fixed-frequency-scheduler frequency="60000"/>
 	        <watermark variable="lastQueryDate" default-expression="YESTERDAY" selector="MAX" selector-expression="#[payload.LastModifiedDate]"/>
-            <sfdc:query-all config-ref="SalesforceA"   doc:name="Query Contacts from SalesFroce Instance A" query="SELECT EMail, FirstName, LastName, Id, LastModifiedDate FROM Contact WHERE LastModifiedDate &gt; #[flowVars['lastQueryDate']] AND EMail != null AND MailingCountry IN ('U.S.','United States','US')"/>
+            <sfdc:query-all config-ref="SalesforceA" doc:name="query Contacts from SalesFroce Instance A" query="SELECT EMail, FirstName, LastName, Id, LastModifiedDate FROM Contact WHERE LastModifiedDate &gt; #[flowVars['lastQueryDate']] AND EMail != null AND MailingCountry IN ('U.S.','United States','US')"/>
         </poll>
         <flow-ref name="mainFlow" doc:name="call mainFlow"/>
     </flow>
@@ -21,7 +21,7 @@ http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/m
         <poll doc:name="Poll">
             <fixed-frequency-scheduler frequency="6000"/>
             <watermark variable="lastQueryDate" default-expression="YESTERDAY" selector="MAX" selector-expression="#[payload.LastModifiedDate]"/>
-			<sfdc:query-all config-ref="SalesforceB"   doc:name="Query Contacts from SalesFroce Instance B" query="SELECT EMail, FirstName, LastName, Id, LastModifiedDate FROM Contact WHERE LastModifiedDate &gt; #[flowVars['lastQueryDate']] AND EMail != null AND MailingCountry IN ('U.S.','United States','US')"/>
+			<sfdc:query-all config-ref="SalesforceB"   doc:name="query Contacts from SalesFroce Instance B" query="SELECT EMail, FirstName, LastName, Id, LastModifiedDate FROM Contact WHERE LastModifiedDate &gt; #[flowVars['lastQueryDate']] AND EMail != null AND MailingCountry IN ('U.S.','United States','US')"/>
         </poll>
 		<flow-ref name="mainFlow" doc:name="call mainFlow"/>
     </flow>
