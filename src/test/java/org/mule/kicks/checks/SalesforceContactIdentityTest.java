@@ -3,7 +3,7 @@ package org.mule.kicks.checks;
 import static org.mule.kicks.builders.ContactBuilder.aContact;
 
 import java.util.Map;
-import static org.mule.kicks.checks.SalesforceContactIdentity.areEqual;
+import static org.mule.kicks.compare.SalesforceContactIdentity.areEqual;
 
 import org.junit.Assert;
 import org.junit.Test;
