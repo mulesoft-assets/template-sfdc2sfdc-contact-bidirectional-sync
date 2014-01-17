@@ -1,10 +1,11 @@
 package org.mule.kicks.semaphore;
 
-import java.io.Serializable;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Lock;
 
 import org.apache.log4j.Logger;
-import org.mule.api.store.ObjectStore;
-import org.mule.api.store.ObjectStoreException;
+import org.mule.api.MuleContext;
+import org.mule.api.context.MuleContextAware;
 
 /**
  * This class objective is to create a critical area around the application in
@@ -12,49 +13,31 @@ import org.mule.api.store.ObjectStoreException;
  * 
  * @author javiercasal
  */
-public class PollSemaphore {
+public class PollSemaphore implements MuleContextAware {
 
+	private static final String LOCK_ID = "poll_semaphore_lock";
 	private static final Logger log = Logger.getLogger(PollSemaphore.class);
 
-	private static final String SEMAPHORE_KEY = "status";
-	private static final String BUSY_STATUS = "BUSY";
-	private static final String AVAILABLE_STATUS = "IDLE";
+	private MuleContext muleContext;
 
-	private ObjectStore<Serializable> objectStore;
+	// private ObjectStore<Serializable> objectStore;
+	// private Semaphore semaphore = new Semaphore(1);
 
-	public synchronized boolean red() {
-		String status;
-
-		try {
-			status = (String) objectStore.retrieve(SEMAPHORE_KEY);
-			if (status.equals(AVAILABLE_STATUS)) {
-				objectStore.store(SEMAPHORE_KEY, BUSY_STATUS);
-				return true;
-			}
-		} catch (ObjectStoreException e) {
-			log.error("The ObjectStore is not available");
-		}
-
-		return false;
+	public void acquireLock() throws InterruptedException {
+		getLock().lock();
 	}
 
-	public synchronized boolean green() {
-		try {
-			objectStore.store(SEMAPHORE_KEY, AVAILABLE_STATUS);
-			return true;
-		} catch (ObjectStoreException e) {
-			log.error("The ObjectStore is not available");
-		}
-
-		return false;
+	public void releaseLock() {
+		getLock().unlock();
 	}
 
-	public ObjectStore<Serializable> getObjectStore() {
-		return objectStore;
+	@Override
+	public void setMuleContext(MuleContext context) {
+		this.muleContext = context;
 	}
 
-	public void setObjectStore(ObjectStore<Serializable> objectStore) {
-		this.objectStore = objectStore;
+	private Lock getLock() {
+		return muleContext.getLockFactory().createLock(LOCK_ID);
 	}
 
 }

@@ -8,7 +8,8 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
 http://www.mulesoft.org/schema/mule/objectstore http://www.mulesoft.org/schema/mule/objectstore/current/mule-objectstore.xsd" version="EE-3.5.0">
     
-    <flow name="mainFlow" processingStrategy="synchronous" doc:name="mainFlow"><set-variable variableName="semaphoreStatus" value="#[app.registry['PollSemaphore'].red()]" doc:name="try to gain access to the Semaphore"/>
+    <flow name="mainFlow" processingStrategy="synchronous" doc:name="mainFlow">
+        <expression-component doc:name="try to gain access to the Semaphore"><![CDATA[#[app.registry['PollSemaphore'].acquireLock()]]]></expression-component>
         <!-- choice based on semaphore boolean -->
         <choice doc:name="Choice">
         	<when expression="flowVars['semaphoreStatus'] == false">
@@ -20,6 +21,7 @@ http://www.mulesoft.org/schema/mule/objectstore http://www.mulesoft.org/schema/m
         		<logger level="INFO" message="Semaphore taken skiping run." doc:name="log 'Semaphore taken skiping run.'"/>
         	</otherwise>
         </choice>
+        <expression-component doc:name="release access to the Semaphore"><![CDATA[#[app.registry['PollSemaphore'].releaseLock()]]]></expression-component>
         <exception-strategy ref="defaultChoiceExceptionStrategy" doc:name="catch Exception and call defaultChoiceExceptionStrategy"/>
     </flow>
     <sub-flow name="synchronizeFlow" doc:name="synchronizeFlow">
