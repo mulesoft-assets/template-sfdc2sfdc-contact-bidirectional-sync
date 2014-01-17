@@ -1,4 +1,4 @@
-package org.mule.kicks.checks;
+package org.mule.kicks.compare;
 
 import java.util.Arrays;
 import java.util.List;
