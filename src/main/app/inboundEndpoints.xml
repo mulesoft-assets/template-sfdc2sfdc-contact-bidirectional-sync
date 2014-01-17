@@ -12,7 +12,7 @@ http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/m
         <poll doc:name="Poll">
             <fixed-frequency-scheduler frequency="60000"/>
 	        <watermark variable="lastQueryDate" default-expression="YESTERDAY" selector="MAX" selector-expression="#[payload.LastModifiedDate]"/>
-            <sfdc:query-all config-ref="SalesforceA" doc:name="query Contacts from SalesFroce Instance A" query="SELECT EMail, FirstName, LastName, Id, LastModifiedDate FROM Contact WHERE LastModifiedDate &gt; #[flowVars['lastQueryDate']] AND EMail != null AND MailingCountry IN ('U.S.','United States','US')"/>
+            <sfdc:query config-ref="SalesforceA" doc:name="query Contacts from SalesFroce Instance A" query="dsql:SELECT EMail, FirstName, LastName, Id, LastModifiedDate FROM Contact WHERE LastModifiedDate &gt; #[flowVars['lastQueryDate']] AND EMail != null AND MailingCountry IN ('U.S.','United States','US') ORDER BY LastModifiedDate ASC LIMIT 200" fetchSize="${page.size}"/>
         </poll>
         <flow-ref name="mainFlow" doc:name="call mainFlow"/>
     </flow>
@@ -21,7 +21,7 @@ http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/m
         <poll doc:name="Poll">
             <fixed-frequency-scheduler frequency="6000"/>
             <watermark variable="lastQueryDate" default-expression="YESTERDAY" selector="MAX" selector-expression="#[payload.LastModifiedDate]"/>
-			<sfdc:query-all config-ref="SalesforceB"   doc:name="query Contacts from SalesFroce Instance B" query="SELECT EMail, FirstName, LastName, Id, LastModifiedDate FROM Contact WHERE LastModifiedDate &gt; #[flowVars['lastQueryDate']] AND EMail != null AND MailingCountry IN ('U.S.','United States','US')"/>
+			<sfdc:query config-ref="SalesforceB"   doc:name="query Contacts from SalesFroce Instance B" query="dsql:SELECT EMail, FirstName, LastName, Id, LastModifiedDate FROM Contact WHERE LastModifiedDate &gt; #[flowVars['lastQueryDate']] AND EMail != null AND MailingCountry IN ('U.S.','United States','US') ORDER BY LastModifiedDate ASC LIMIT 200" fetchSize="${page.size}"/>
         </poll>
 		<flow-ref name="mainFlow" doc:name="call mainFlow"/>
     </flow>
