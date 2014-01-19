@@ -17,9 +17,7 @@ http://www.mulesoft.org/schema/mule/objectstore http://www.mulesoft.org/schema/m
     <objectstore:config name="ObjectStore" doc:name="ObjectStore" objectStore-ref="_defaultInMemoryObjectStore"/>
     
     <spring:beans>
-        <spring:bean id="PollSemaphore" name="PollSemaphore" class="org.mule.kicks.semaphore.PollSemaphore" scope="singleton">
-            <spring:property name="objectStore" ref="ObjectStore"/>
-        </spring:bean>
+        <spring:bean id="PollSemaphore" name="PollSemaphore" class="org.mule.kicks.semaphore.PollSemaphore" scope="singleton"/>
     </spring:beans>
     
     <sfdc:config name="SalesforceA" username="${sfdc.a.username}" password="${sfdc.a.password}" securityToken="${sfdc.a.securityToken}" url="${sfdc.a.url}" doc:name="Salesforce" doc:description="One of your SalesForce instances, order does not matter.">
