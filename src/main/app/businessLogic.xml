@@ -15,11 +15,13 @@ http://www.mulesoft.org/schema/mule/objectstore http://www.mulesoft.org/schema/m
         <expression-component doc:name="release access to the Semaphore"><![CDATA[#[app.registry['PollSemaphore'].releaseLock()]]]></expression-component>
         <exception-strategy ref="defaultChoiceExceptionStrategy" doc:name="catch Exception and call defaultChoiceExceptionStrategy"/>
     </flow>
+    
     <sub-flow name="synchronizeFlow" doc:name="synchronizeFlow">
         <flow-ref name="queryContactInBFlow" doc:name="call queryContactInBFlow"/>
         <flow-ref name="checkDoNotSyncMarkFlow" doc:name="call checkDoNotSyncMarkFlow"/>
         <choice doc:name="Choice">
-            <when expression="">
+            <!-- TODO: define the when expression -->
+            <when expression="true">
                 <flow-ref name="createContactInBFlow" doc:name="call createContactInBFlow"/>
                 <flow-ref name="putDoNotSyncMarkFlow" doc:name="call putDoNotSyncMarkFlow"/>
             </when>
@@ -28,16 +30,21 @@ http://www.mulesoft.org/schema/mule/objectstore http://www.mulesoft.org/schema/m
             </otherwise>
         </choice>
     </sub-flow>
+    
     <sub-flow name="checkDoNotSyncMarkFlow" doc:name="checkDoNotSyncMarkFlow">
         <objectstore:all-keys config-ref="" doc:name="ObjectStore"/>
     </sub-flow>
+    
     <sub-flow name="removeDoNotSyncMarkFlow" doc:name="removeDoNotSyncMarkFlow">
         <objectstore:all-keys config-ref="" doc:name="ObjectStore"/>
     </sub-flow>
+    
     <sub-flow name="putDoNotSyncMarkFlow" doc:name="putDoNotSyncMarkFlow">
         <objectstore:all-keys config-ref="" doc:name="ObjectStore"/>
     </sub-flow>
+    
     <sub-flow name="queryContactInBFlow" doc:name="queryContactInBFlow"/>
+    
     <sub-flow name="createContactInBFlow" doc:name="createContactInBFlow"/>
     
 </mule>
