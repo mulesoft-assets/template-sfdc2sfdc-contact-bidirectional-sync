@@ -1,9 +1,7 @@
 package org.mule.kicks.semaphore;
 
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Lock;
 
-import org.apache.log4j.Logger;
 import org.mule.api.MuleContext;
 import org.mule.api.context.MuleContextAware;
 
@@ -16,12 +14,7 @@ import org.mule.api.context.MuleContextAware;
 public class PollSemaphore implements MuleContextAware {
 
 	private static final String LOCK_ID = "poll_semaphore_lock";
-	private static final Logger log = Logger.getLogger(PollSemaphore.class);
-
 	private MuleContext muleContext;
-
-	// private ObjectStore<Serializable> objectStore;
-	// private Semaphore semaphore = new Semaphore(1);
 
 	public void acquireLock() throws InterruptedException {
 		getLock().lock();
