@@ -2,27 +2,67 @@
 
 <mule xmlns:objectstore="http://www.mulesoft.org/schema/mule/objectstore" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" 	xmlns="http://www.mulesoft.org/schema/mule/core" 
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:spring="http://www.springframework.org/schema/beans" 
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
-http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
-http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
-http://www.mulesoft.org/schema/mule/objectstore http://www.mulesoft.org/schema/mule/objectstore/current/mule-objectstore.xsd" version="EE-3.5.0">
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" 
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd" version="EE-3.5.0">
     
     <flow name="mainFlow" processingStrategy="synchronous" doc:name="mainFlow">
         <expression-component doc:name="try to gain access to the Semaphore"><![CDATA[#[app.registry['PollSemaphore'].acquireLock()]]]></expression-component>
-        <flow-ref name="synchronizeFlow" doc:name="call syncrhonizeFlow"/>
-        <!-- choice based on semaphore boolean -->
+
+		<set-variable variableName="contactList" value="#[new java.util.ArrayList()]" doc:name="set contactList variable"/>
+        <foreach doc:name="For Each">
+	        <flow-ref name="synchronizeFlow" doc:name="call syncrhonizeFlow"/>
+        </foreach>
+        <set-payload value="#[contactList]" doc:name="Set Payload"/>
+		<flow-ref name="upsertContactInBFlow" doc:name="Flow Reference"/>
+
         <expression-component doc:name="release access to the Semaphore"><![CDATA[#[app.registry['PollSemaphore'].releaseLock()]]]></expression-component>
+        
         <exception-strategy ref="defaultChoiceExceptionStrategy" doc:name="catch Exception and call defaultChoiceExceptionStrategy"/>
     </flow>
     
     <sub-flow name="synchronizeFlow" doc:name="synchronizeFlow">
-        <flow-ref name="queryContactInBFlow" doc:name="call queryContactInBFlow"/>
+		<enricher source="#[payload]" target="#[flowVars['contactInB']]" doc:name="Message Enricher">
+	        <flow-ref name="queryContactInBFlow" doc:name="call queryContactInBFlow"/>
+       	</enricher>
+        
+        <logger level="INFO" message="Contact in B: #[contactInB]" doc:name="Logger"/>
+        <logger level="INFO" message="Payload: #[payload]" doc:name="Logger"/>
+        
+        <choice doc:name="Choice">
+		    <when expression="#[contactInB is org.mule.transport.NullPayload]">
+		        <logger level="INFO" message="The Contact in A does not exist in B; so, it should be created" doc:name="Logger"/>
+		        <expression-component doc:name="prepare Contact for upsert" >payload.remove('Id'); payload.remove('LastModifiedDate')</expression-component>
+		    </when>
+		    <otherwise>
+		        <logger level="INFO" message="It exists a contact in B with the same email as the one in A" doc:name="Logger"/>
+		        
+		        <logger level="DEBUG" message="#[groovy:message.getInvocationProperty('contactInB').get('LastModifiedDate')]" doc:name="Logger"/>
+		        <logger level="DEBUG" message="#[groovy:message.getPayload().get('LastModifiedDate')]" doc:name="Logger"/>
+		        
+		        <choice doc:name="Choice">
+					<when evaluator="groovy" expression="return (message.getInvocationProperty('contactInB').get('LastModifiedDate') > message.getPayload().get('LastModifiedDate'))">
+				        <logger level="INFO" message="HOLA A!" doc:name="Logger"/>
+				        <objectstore:retrieve config-ref="ObjectStore" key="#[string:#[flowVars['Email']]]" doc:name="Retrieve pollingStatus"/>
+					</when>
+					<otherwise>
+				        <logger />
+					</otherwise>
+				</choice>
+		        
+		        <expression-component doc:name="prepare Contact for upsert" >payload.put('Id',flowVars['contactInB'].get('Id')); payload.remove('LastModifiedDate')</expression-component>
+		    </otherwise>
+		</choice>
+     	<expression-component doc:name="add Contact to contactList"><![CDATA[contactList.add(payload)]]></expression-component>
+     	
         <flow-ref name="checkDoNotSyncMarkFlow" doc:name="call checkDoNotSyncMarkFlow"/>
         <choice doc:name="Choice">
             <!-- TODO: define the when expression -->
             <when expression="true">
-                <flow-ref name="createContactInBFlow" doc:name="call createContactInBFlow"/>
+                <flow-ref name="upsertContactInBFlow" doc:name="call createContactInBFlow"/>
                 <flow-ref name="putDoNotSyncMarkFlow" doc:name="call putDoNotSyncMarkFlow"/>
             </when>
             <otherwise>
@@ -44,11 +84,14 @@ http://www.mulesoft.org/schema/mule/objectstore http://www.mulesoft.org/schema/m
     </sub-flow>
     
     <sub-flow name="queryContactInBFlow" doc:name="queryContactInBFlow">
-    	<logger level="INFO" message="dummy logger" />
+    	<sfdc:query-single config-ref="SalesforceB" query="SELECT Id, FirstName, LastName, LastModifiedDate FROM Contact WHERE Email = '#[payload['Email']]'" doc:name="Salesforce"/>
     </sub-flow>
     
-    <sub-flow name="createContactInBFlow" doc:name="createContactInBFlow">
-    	<logger level="INFO" message="dummy logger" />
+    <sub-flow name="upsertContactInBFlow" doc:name="upsertContactInBFlow">
+		<sfdc:upsert config-ref="SalesforceB" externalIdFieldName="Id" type="Contact" doc:name="upsert Contacts in Org B">
+            <sfdc:objects ref="#[payload]"/>
+        </sfdc:upsert>
+		<logger level="INFO" message="Payload after creation: #[payload]" />
     </sub-flow>
     
 </mule>
