@@ -13,23 +13,22 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
     <flow name="mainFlow" processingStrategy="synchronous" doc:name="mainFlow">
         <expression-component doc:name="try to gain access to the Semaphore"><![CDATA[#[app.registry['PollSemaphore'].acquireLock()]]]></expression-component>
 
+		<logger level="INFO" message="~.~.~.~.~.~.~.~.~.~.~.~.~.~.~ Start synchronization from #[sourceSystem] ~.~.~.~.~.~.~.~.~.~.~.~.~.~.~" />
 		<set-variable variableName="contactList" value="#[new java.util.ArrayList()]" doc:name="set contactList variable"/>
         <foreach doc:name="For Each">
 	        <set-variable variableName="contactInA" value="#[payload]" doc:name="Variable" />
 	        <flow-ref name="synchronizeFlow" doc:name="call syncrhonizeFlow"/>
         </foreach>
-        
         <choice>
 			<when evaluator="groovy" expression="return !(message.getInvocationProperty('contactList').isEmpty())">
 				<logger level="INFO" message="Contact updates found" />
 		        <set-payload value="#[contactList]" doc:name="Set Payload"/>
-				<flow-ref name="upsertContactInBFlow" doc:name="Flow Reference"/>
+				<flow-ref name="upsertContactInTargetSystemFlow" doc:name="Flow Reference"/>
 			</when>
 			<otherwise>
 				<logger level="INFO" message="No updates to be executed" />
 			</otherwise>
 		</choice>
-        
 
         <expression-component doc:name="release access to the Semaphore"><![CDATA[#[app.registry['PollSemaphore'].releaseLock()]]]></expression-component>
         
@@ -38,7 +37,7 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
     
     <sub-flow name="synchronizeFlow" doc:name="synchronizeFlow">
 		<enricher source="#[payload]" target="#[flowVars['contactInB']]" doc:name="Message Enricher">
-	        <flow-ref name="queryContactInBFlow" doc:name="call queryContactInBFlow"/>
+	        <flow-ref name="queryContactInTargetSystemFlow" doc:name="call queryContactInTargetSystemFlow"/>
        	</enricher>
         
         <logger level="INFO" message="Contact in A: #[contactInA]" doc:name="Logger"/>
@@ -53,24 +52,27 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 		        <logger level="INFO" message="It exists a contact in B with the same email as the one in A" doc:name="Logger"/>
 		        
 		        <choice doc:name="Choice">
-					<when evaluator="groovy" expression="return (message.getInvocationProperty('contactInB').get('LastModifiedDate') > message.getInvocationProperty('contactInA').get('LastModifiedDate'))">
+		        	<!-- TODO: refactor using MEL flowVars['contactInB']['LastModifiedDate'] -->
+		        	<!-- TODO: refactor using the bigger case first -->
+					<when evaluator="groovy" expression="return (message.getInvocationProperty('contactInB').get('LastModifiedDate') >= message.getInvocationProperty('contactInA').get('LastModifiedDate'))">
 				        <logger level="INFO" message="Hello B! See you in the next polling!" doc:name="Logger"/>
 				        <set-variable variableName="upsertContact" value="false" doc:name="Variable" />
-				        <!-- Should I remove some entrance in the Objectstore here? -->
 					</when>
 					<otherwise>
 				        <logger level="INFO" message="Hello A! Lets see if we should update you!" doc:name="Logger"/>
-						<objectstore:retrieve config-ref="ObjectStore" key="#[string:#[flowVars['contactInB']].get('Email')]" defaultValue-ref="#[string:new update]"/>
+				        <logger level="INFO" message="The email seached: #[contactInB.get('Email')]" doc:name="Logger"/>
+						<objectstore:retrieve config-ref="ObjectStore" key="#[contactInB.get('Email')]" defaultValue-ref="#[string:new update]"/>
 				        <choice>
+				        	<!-- TODO: refactor using MEL #['new update'.equals(payload)] -->
 							<when evaluator="groovy" expression="return message.getPayload() == 'new update'">
 						        <logger level="INFO" message="New update! Prepare the contact to be updated in B..." doc:name="Logger"/>
 						        <expression-component doc:name="prepare Contact for upsert" >contactInA.put('Id',flowVars['contactInB'].get('Id')); contactInA.remove('LastModifiedDate')</expression-component>
-								<objectstore:store config-ref="ObjectStore" key="#[string:#[flowVars['contactInB']].get('Email')]" value-ref="#[string:hello!]" overwrite="true"/>
+								<objectstore:store config-ref="ObjectStore" key="#[contactInB.get('Email')]" value-ref="#[string:hello!]" overwrite="true"/>
 							</when>
 							<otherwise>
-						        <logger level="INFO" message="Cicle UPDATE!" doc:name="Logger"/>
+						        <logger level="INFO" message="WARNING: Cicle update!" doc:name="Logger"/>
 						        <set-variable variableName="upsertContact" value="false" doc:name="Variable" />
-								<objectstore:remove config-ref="ObjectStore" key="#[string:#[flowVars['contactInB']].get('Email')]"/>
+								<objectstore:remove config-ref="ObjectStore" key="#[contactInB.get('Email')]"/>
 							</otherwise>
 						</choice>
 					</otherwise>
@@ -93,7 +95,7 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
         <choice doc:name="Choice">
             TODO: define the when expression
             <when expression="true">
-                <flow-ref name="upsertContactInBFlow" doc:name="call createContactInBFlow"/>
+                <flow-ref name="upsertContactInTargetSystemFlow" doc:name="call createContactInBFlow"/>
                 <flow-ref name="putDoNotSyncMarkFlow" doc:name="call putDoNotSyncMarkFlow"/>
             </when>
             <otherwise>
@@ -114,14 +116,30 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
         <objectstore:all-keys config-ref="" doc:name="ObjectStore"/>
     </sub-flow>
     
-    <sub-flow name="queryContactInBFlow" doc:name="queryContactInBFlow">
-    	<sfdc:query-single config-ref="SalesforceB" query="SELECT Id, FirstName, LastName, LastModifiedDate FROM Contact WHERE Email = '#[payload['Email']]'" doc:name="Salesforce"/>
+    <sub-flow name="queryContactInTargetSystemFlow" doc:name="queryContactInTargetSystemFlow">
+		<choice>
+			<when evaluator="groovy" expression="return message.getInvocationProperty('sourceSystem') == 'A'">
+		    	<sfdc:query-single config-ref="SalesforceB" query="SELECT Id, FirstName, LastName, LastModifiedDate, Email FROM Contact WHERE Email = '#[payload['Email']]'" doc:name="Salesforce"/>
+			</when>
+			<otherwise>
+		    	<sfdc:query-single config-ref="SalesforceA" query="SELECT Id, FirstName, LastName, LastModifiedDate, Email FROM Contact WHERE Email = '#[payload['Email']]'" doc:name="Salesforce"/>
+			</otherwise>
+		</choice>
     </sub-flow>
     
-    <sub-flow name="upsertContactInBFlow" doc:name="upsertContactInBFlow">
-		<sfdc:upsert config-ref="SalesforceB" externalIdFieldName="Id" type="Contact" doc:name="upsert Contacts in Org B">
-            <sfdc:objects ref="#[payload]"/>
-        </sfdc:upsert>
+    <sub-flow name="upsertContactInTargetSystemFlow" doc:name="upsertContactInTargetSystemFlow">
+		<choice>
+			<when evaluator="groovy" expression="return message.getInvocationProperty('sourceSystem') == 'A'">
+				<sfdc:upsert config-ref="SalesforceB" externalIdFieldName="Id" type="Contact" doc:name="upsert Contacts in Org B">
+		            <sfdc:objects ref="#[payload]"/>
+		        </sfdc:upsert>
+			</when>
+			<otherwise>
+				<sfdc:upsert config-ref="SalesforceA" externalIdFieldName="Id" type="Contact" doc:name="upsert Contacts in Org A">
+		            <sfdc:objects ref="#[payload]"/>
+		        </sfdc:upsert>
+			</otherwise>
+		</choice>
 		<logger level="INFO" message="Payload after creation: #[payload]" />
     </sub-flow>
     
