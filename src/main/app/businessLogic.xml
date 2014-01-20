@@ -43,8 +43,12 @@ http://www.mulesoft.org/schema/mule/objectstore http://www.mulesoft.org/schema/m
         <objectstore:all-keys config-ref="" doc:name="ObjectStore"/>
     </sub-flow>
     
-    <sub-flow name="queryContactInBFlow" doc:name="queryContactInBFlow"/>
+    <sub-flow name="queryContactInBFlow" doc:name="queryContactInBFlow">
+    	<logger level="INFO" message="dummy logger" />
+    </sub-flow>
     
-    <sub-flow name="createContactInBFlow" doc:name="createContactInBFlow"/>
+    <sub-flow name="createContactInBFlow" doc:name="createContactInBFlow">
+    	<logger level="INFO" message="dummy logger" />
+    </sub-flow>
     
 </mule>
