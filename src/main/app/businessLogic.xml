@@ -3,10 +3,11 @@
 <mule xmlns:objectstore="http://www.mulesoft.org/schema/mule/objectstore" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" 	xmlns="http://www.mulesoft.org/schema/mule/core" 
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:spring="http://www.springframework.org/schema/beans" 
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" 
+	xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc"
 	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
 http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/objectstore http://www.mulesoft.org/schema/mule/objectstore/current/mule-objectstore.xsd
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd" version="EE-3.5.0">
     
     <flow name="mainFlow" processingStrategy="synchronous" doc:name="mainFlow">
@@ -14,6 +15,7 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 
 		<set-variable variableName="contactList" value="#[new java.util.ArrayList()]" doc:name="set contactList variable"/>
         <foreach doc:name="For Each">
+	        <set-variable variableName="contactInA" value="#[payload]" doc:name="Variable" />
 	        <flow-ref name="synchronizeFlow" doc:name="call syncrhonizeFlow"/>
         </foreach>
         <set-payload value="#[contactList]" doc:name="Set Payload"/>
@@ -29,38 +31,46 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 	        <flow-ref name="queryContactInBFlow" doc:name="call queryContactInBFlow"/>
        	</enricher>
         
+        <logger level="INFO" message="Contact in A: #[contactInA]" doc:name="Logger"/>
         <logger level="INFO" message="Contact in B: #[contactInB]" doc:name="Logger"/>
-        <logger level="INFO" message="Payload: #[payload]" doc:name="Logger"/>
         
         <choice doc:name="Choice">
 		    <when expression="#[contactInB is org.mule.transport.NullPayload]">
 		        <logger level="INFO" message="The Contact in A does not exist in B; so, it should be created" doc:name="Logger"/>
-		        <expression-component doc:name="prepare Contact for upsert" >payload.remove('Id'); payload.remove('LastModifiedDate')</expression-component>
+		        <expression-component doc:name="prepare Contact for upsert" >contactInA.remove('Id'); contactInA.remove('LastModifiedDate')</expression-component>
 		    </when>
 		    <otherwise>
 		        <logger level="INFO" message="It exists a contact in B with the same email as the one in A" doc:name="Logger"/>
 		        
-		        <logger level="DEBUG" message="#[groovy:message.getInvocationProperty('contactInB').get('LastModifiedDate')]" doc:name="Logger"/>
-		        <logger level="DEBUG" message="#[groovy:message.getPayload().get('LastModifiedDate')]" doc:name="Logger"/>
-		        
 		        <choice doc:name="Choice">
-					<when evaluator="groovy" expression="return (message.getInvocationProperty('contactInB').get('LastModifiedDate') > message.getPayload().get('LastModifiedDate'))">
-				        <logger level="INFO" message="HOLA A!" doc:name="Logger"/>
-				        <objectstore:retrieve config-ref="ObjectStore" key="#[string:#[flowVars['Email']]]" doc:name="Retrieve pollingStatus"/>
+					<when evaluator="groovy" expression="return (message.getInvocationProperty('contactInB').get('LastModifiedDate') > message.getInvocationProperty('contactInA').get('LastModifiedDate'))">
+				        <logger level="INFO" message="Hello B! See you in the next polling!" doc:name="Logger"/>
 					</when>
 					<otherwise>
-				        <logger />
+						<objectstore:retrieve config-ref="ObjectStore" key="#[string:#[flowVars['contactInB']].get('Email')]" defaultValue-ref="#[string:new update]"/>
+				        <choice>
+							<when evaluator="groovy" expression="return message.getPayload() == 'new update'">
+						        <logger level="INFO" message="NEW UPDATE!" doc:name="Logger"/>
+						        
+							</when>
+							<otherwise>
+						        <logger level="INFO" message="Cicle UPDATE!" doc:name="Logger"/>
+							</otherwise>
+						</choice>
+				        <logger level="INFO" message="HOLA A!" doc:name="Logger"/>
 					</otherwise>
 				</choice>
 		        
-		        <expression-component doc:name="prepare Contact for upsert" >payload.put('Id',flowVars['contactInB'].get('Id')); payload.remove('LastModifiedDate')</expression-component>
+				<!-- <objectstore:store config-ref="ObjectStore" key="#[string:#[flowVars['contactInB']].get('Email')]" value-ref="#[string:hello!]" overwrite="true"/> -->
+		        
+		        <expression-component doc:name="prepare Contact for upsert" >contactInA.put('Id',flowVars['contactInB'].get('Id')); contactInA.remove('LastModifiedDate')</expression-component>
 		    </otherwise>
 		</choice>
      	<expression-component doc:name="add Contact to contactList"><![CDATA[contactList.add(payload)]]></expression-component>
      	
-        <flow-ref name="checkDoNotSyncMarkFlow" doc:name="call checkDoNotSyncMarkFlow"/>
+<!--         <flow-ref name="checkDoNotSyncMarkFlow" doc:name="call checkDoNotSyncMarkFlow"/>
         <choice doc:name="Choice">
-            <!-- TODO: define the when expression -->
+            TODO: define the when expression
             <when expression="true">
                 <flow-ref name="upsertContactInBFlow" doc:name="call createContactInBFlow"/>
                 <flow-ref name="putDoNotSyncMarkFlow" doc:name="call putDoNotSyncMarkFlow"/>
@@ -68,7 +78,7 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
             <otherwise>
                 <flow-ref name="removeDoNotSyncMarkFlow" doc:name="call removeDoNotSyncMarkFlow"/>
             </otherwise>
-        </choice>
+        </choice> -->
     </sub-flow>
     
     <sub-flow name="checkDoNotSyncMarkFlow" doc:name="checkDoNotSyncMarkFlow">
