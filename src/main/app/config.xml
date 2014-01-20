@@ -12,7 +12,7 @@ http://www.mulesoft.org/schema/mule/objectstore http://www.mulesoft.org/schema/m
 	
 	<!-- This is the main configuration files, you should place here all the Connectors configuration an declarations -->
 
-    <context:property-placeholder location="common.properties, mule.${mule.env}.properties"/>
+    <context:property-placeholder location="common.properties, mule.${mule.env:test}.properties"/>
     
     <objectstore:config name="ObjectStore" doc:name="ObjectStore" objectStore-ref="_defaultInMemoryObjectStore"/>
     
