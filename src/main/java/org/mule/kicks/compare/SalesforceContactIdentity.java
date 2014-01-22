@@ -21,6 +21,10 @@ public class SalesforceContactIdentity {
 				result = 37 * result + fieldValue.hashCode();
 			}
 		}
-		return result;
+		return abs(result);
+	}
+	
+	public static int abs(int a) {
+		return (a <= 0) ? 0 - a : a;
 	}
 }
