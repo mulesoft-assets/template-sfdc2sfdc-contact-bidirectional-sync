@@ -69,8 +69,15 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 								<objectstore:store config-ref="ObjectStore" key="#[contactInTargetInstance.get('Email')]" value-ref="#[payload]" overwrite="true"/>
 							</when>
 							<otherwise>
-						        <logger level="INFO" message="Cicle update detected! The contacts last modification belongs to the one made in the previous sync. Nothing should be done" doc:name="log that a cycle update was detected"/>
-						        <set-variable variableName="upsertContact" value="false" doc:name="Variable" />
+								<choice>
+								    <when expression="#[payload == org.mule.kicks.compare.SalesforceContactIdentity.hashCode(contactInSourceInstance)]">
+								        <logger level="INFO" message="Cicle update detected! The contact's last modification belongs to the one made in the previous sync. Nothing should be done" doc:name="log that a cycle update was detected"/>
+								        <set-variable variableName="upsertContact" value="false" doc:name="Variable" />
+								    </when>
+								    <otherwise>
+								        <logger level="INFO" message="The contact in the target instance has been modified after the previous sync. The integration will take care of it when polling goes in the other direction" doc:name="log that the contact in the target instance has been modified after the previous sync so nothing should be done now"/>
+								    </otherwise>
+								</choice>
 								<objectstore:remove config-ref="ObjectStore" key="#[contactInTargetInstance.get('Email')]"/>
 							</otherwise>
 						</choice>
