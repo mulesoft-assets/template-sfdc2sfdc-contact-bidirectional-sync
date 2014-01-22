@@ -13,7 +13,7 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
     <flow name="mainFlow" processingStrategy="synchronous" doc:name="mainFlow">
         <expression-component doc:name="try to gain access to the Semaphore"><![CDATA[#[app.registry['PollSemaphore'].acquireLock()]]]></expression-component>
 
-		<logger level="INFO" message="~.~.~.~.~.~.~.~.~.~.~.~.~.~.~ Start synchronization from #[sourceSystem] ~.~.~.~.~.~.~.~.~.~.~.~.~.~.~" doc:name="log to indicate that the synchronization has started"/>
+		<logger level="INFO" message="~.~.~.~.~.~.~.~.~.~.~.~.~.~.~ Start synchronization from Salesforce instance #[sourceSystem] ~.~.~.~.~.~.~.~.~.~.~.~.~.~.~" doc:name="log to indicate that the synchronization has started"/>
 		<set-variable variableName="contactList" value="#[new java.util.ArrayList()]" doc:name="set contactList with an empty list"/>
         <foreach doc:name="For Each contact in the source instance that has been modified since the watermark...">
 	        <set-variable variableName="contactInSourceInstance" value="#[payload]" doc:name="set contactInSourceInstance with the current contact" />
@@ -21,12 +21,11 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
         </foreach>
         <choice doc:name="Choice">
 			<when evaluator="groovy" expression="return !(message.getInvocationProperty('contactList').isEmpty())">
-				<logger level="INFO" message="Contact updates found" doc:name="log 'Contact updates found'"/>
 		        <set-payload value="#[contactList]" doc:name="set to list with contacts to be updated/created"/>
 				<flow-ref name="upsertContactInTargetSystemFlow" doc:name="call upsertContactInTargetSystemFlow"/>
 			</when>
 			<otherwise>
-				<logger level="INFO" message="No updates to be executed" doc:name="log 'No updates to be executed'"/>
+				<logger level="INFO" message="No updates or new contacts to be sync" doc:name="log 'No updates or new contacts to be sync'"/>
 			</otherwise>
 		</choice>
 
@@ -40,8 +39,8 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 	        <flow-ref name="queryContactInTargetSystemFlow" doc:name="call queryContactInTargetSystemFlow"/>
        	</enricher>
         
-        <logger level="INFO" message="Contact in source instance: #[contactInSourceInstance]" doc:name="log contact details in source instance"/>
-        <logger level="DEBUG" message="Contact in target instance: #[contactInTargetInstance]" doc:name="log contact details in target instance"/>
+        <logger level="INFO" message="Contact in source instance details: #[contactInSourceInstance]" doc:name="log contact details in source instance"/>
+        <logger level="DEBUG" message="Contact in target instance details: #[contactInTargetInstance]" doc:name="log contact details in target instance"/>
         
         <choice doc:name="Choice">
 		    <when expression="#[contactInTargetInstance is org.mule.transport.NullPayload]">
@@ -63,7 +62,7 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 				        <choice doc:name="Choice">
 							<!-- <when evaluator="groovy" expression="return message.getPayload() == 'new update'"> -->
 							<when expression="#['new update'.equals(payload)]">
-						        <logger level="INFO" message="A new update found! Proceeding with the update process..." doc:name="log 'A new update found! Proceeding with the update process...'"/>
+						        <logger level="INFO" message="Proceeding with the update process..." doc:name="log 'Proceeding with the update process...'"/>
 						        <expression-component doc:name="prepare contact for upsert" >contactInSourceInstance.put('Id',flowVars['contactInTargetInstance'].get('Id')); contactInSourceInstance.remove('LastModifiedDate')</expression-component>
 						        <expression-component doc:name="get contact identifier hash-code">payload = org.mule.kicks.compare.SalesforceContactIdentity.hashCode(contactInSourceInstance)</expression-component>
 								<objectstore:store config-ref="ObjectStore" key="#[contactInTargetInstance.get('Email')]" value-ref="#[payload]" overwrite="true"/>
@@ -88,11 +87,9 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 		
 		<choice doc:name="Choice">
 			<when evaluator="groovy" expression="return message.getInvocationProperty('upsertContact') == 'false'">
-		        <logger level="INFO" message="Cicle detected" doc:name="Logger"/>
 				<set-variable variableName="upsertContact" value="true" doc:name="Variable" />
 			</when>
 			<otherwise>
-		        <logger level="INFO" message="No cicle detected" doc:name="Logger"/>
 		     	<expression-component doc:name="add Contact to contactList"><![CDATA[contactList.add(contactInSourceInstance)]]></expression-component>
 			</otherwise>
 		</choice>
@@ -122,7 +119,7 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 		        </sfdc:upsert>
 			</otherwise>
 		</choice>
-		<logger level="INFO" message="Payload after creation: #[payload]" doc:name="Logger"/>
+		<logger level="INFO" message="Upsert Salesforce response: #[payload]" doc:name="log upsert Salesforce response"/>
     </sub-flow>
     
 </mule>
