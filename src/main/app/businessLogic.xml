@@ -36,41 +36,40 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
     </flow>
     
     <sub-flow name="synchronizeFlow" doc:name="synchronizeFlow">
-		<enricher source="#[payload]" target="#[flowVars['contactInTargetInstance']]" doc:name="Message Enricher">
+		<enricher source="#[payload]" target="#[flowVars['contactInTargetInstance']]" doc:name="store the contact details for the belonging contact in the target instance">
 	        <flow-ref name="queryContactInTargetSystemFlow" doc:name="call queryContactInTargetSystemFlow"/>
        	</enricher>
         
-        <logger level="INFO" message="Contact in A: #[contactInSourceInstance]" doc:name="log contact details in source instance"/>
-        <logger level="INFO" message="Contact in B: #[contactInTargetInstance]" doc:name="log contact details in target instance"/>
+        <logger level="INFO" message="Contact in source instance: #[contactInSourceInstance]" doc:name="log contact details in source instance"/>
+        <logger level="DEBUG" message="Contact in target instance: #[contactInTargetInstance]" doc:name="log contact details in target instance"/>
         
         <choice doc:name="Choice">
 		    <when expression="#[contactInTargetInstance is org.mule.transport.NullPayload]">
-		        <logger level="INFO" message="The Contact in A does not exist in B; so, it should be created" doc:name="log 'The Contact in A does not exist in B; so, it should be created'"/>
+		        <logger level="INFO" message="The Contact in source instance does not exist in target instance; so, it should be created" doc:name="log that the contact does not exist in target instance, so it should be created"/>
 		        <expression-component doc:name="prepare contact for upsert" >contactInSourceInstance.remove('Id'); contactInSourceInstance.remove('LastModifiedDate')</expression-component>
 		    </when>
 		    <otherwise>
-		        <logger level="INFO" message="It exists a contact in B with the same email as the one in A" doc:name="log 'It exists a contact in B with the same email as the one in A'"/>
-		        
+		        <logger level="INFO" message="It exists a contact in the target instance with the same email as the one in source instance" doc:name="log that the does exist in target instance"/>
 		        <choice doc:name="Choice">
 		        	<!-- TODO: refactor using MEL flowVars['contactInTargetInstance']['LastModifiedDate'] -->
 		        	<!-- TODO: refactor using the bigger case first -->
 					<when evaluator="groovy" expression="return (message.getInvocationProperty('contactInTargetInstance').get('LastModifiedDate') >= message.getInvocationProperty('contactInSourceInstance').get('LastModifiedDate'))">
-				        <logger level="INFO" message="Hello B! See you in the next polling!" doc:name="Debug logger"/>
+				        <logger level="INFO" message="The contact's last update was made in the target instance. The integration will take care of it when polling goes in the other direction" doc:name="log that the contact's last update was made in the target instance so nothing should be done now"/>
 				        <set-variable variableName="upsertContact" value="false" doc:name="set upsertContact to false" />
 					</when>
 					<otherwise>
-				        <logger level="INFO" message="Hello A! Lets see if we should update you!" doc:name="Debug logger"/>
-				        <logger level="INFO" message="The email seached: #[contactInTargetInstance.get('Email')]" doc:name="Debug logger"/>
+				        <logger level="DEBUG" message="The contact's last update was made in the source instance" doc:name="log that the contact's last update was made in the source instance"/>
 						<objectstore:retrieve config-ref="ObjectStore" key="#[contactInTargetInstance.get('Email')]" defaultValue-ref="#[string:new update]"/>
 				        <choice doc:name="Choice">
-				        	<!-- TODO: refactor using MEL #['new update'.equals(payload)] -->
-							<when evaluator="groovy" expression="return message.getPayload() == 'new update'">
-						        <logger level="INFO" message="New update! Prepare the contact to be updated in B..." doc:name="Debug logger"/>
+							<!-- <when evaluator="groovy" expression="return message.getPayload() == 'new update'"> -->
+							<when expression="#['new update'.equals(payload)]">
+						        <logger level="INFO" message="A new update found! Proceeding with the update process..." doc:name="log 'A new update found! Proceeding with the update process...'"/>
 						        <expression-component doc:name="prepare contact for upsert" >contactInSourceInstance.put('Id',flowVars['contactInTargetInstance'].get('Id')); contactInSourceInstance.remove('LastModifiedDate')</expression-component>
-								<objectstore:store config-ref="ObjectStore" key="#[contactInTargetInstance.get('Email')]" value-ref="#[string:hello!]" overwrite="true"/>
+						        <expression-component doc:name="get contact identifier hash-code">payload = org.mule.kicks.compare.SalesforceContactIdentity.hashCode(contactInSourceInstance)</expression-component>
+								<objectstore:store config-ref="ObjectStore" key="#[contactInTargetInstance.get('Email')]" value-ref="#[payload]" overwrite="true"/>
 							</when>
 							<otherwise>
-						        <logger level="INFO" message="WARNING: Cicle update!" doc:name="Logger"/>
+						        <logger level="INFO" message="Cicle update detected! The contacts last modification belongs to the one made in the previous sync. Nothing should be done" doc:name="log that a cycle update was detected"/>
 						        <set-variable variableName="upsertContact" value="false" doc:name="Variable" />
 								<objectstore:remove config-ref="ObjectStore" key="#[contactInTargetInstance.get('Email')]"/>
 							</otherwise>
