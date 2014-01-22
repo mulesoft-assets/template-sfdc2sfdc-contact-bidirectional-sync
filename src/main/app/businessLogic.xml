@@ -90,30 +90,6 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 		     	<expression-component doc:name="add Contact to contactList"><![CDATA[contactList.add(contactInSourceInstance)]]></expression-component>
 			</otherwise>
 		</choice>
-     	
-<!--         <flow-ref name="checkDoNotSyncMarkFlow" doc:name="call checkDoNotSyncMarkFlow"/>
-        <choice doc:name="Choice">
-            TODO: define the when expression
-            <when expression="true">
-                <flow-ref name="upsertContactInTargetSystemFlow" doc:name="call createContactInBFlow"/>
-                <flow-ref name="putDoNotSyncMarkFlow" doc:name="call putDoNotSyncMarkFlow"/>
-            </when>
-            <otherwise>
-                <flow-ref name="removeDoNotSyncMarkFlow" doc:name="call removeDoNotSyncMarkFlow"/>
-            </otherwise>
-        </choice> -->
-    </sub-flow>
-    
-    <sub-flow name="checkDoNotSyncMarkFlow" doc:name="checkDoNotSyncMarkFlow">
-        <objectstore:all-keys config-ref="" doc:name="ObjectStore"/>
-    </sub-flow>
-    
-    <sub-flow name="removeDoNotSyncMarkFlow" doc:name="removeDoNotSyncMarkFlow">
-        <objectstore:all-keys config-ref="" doc:name="ObjectStore"/>
-    </sub-flow>
-    
-    <sub-flow name="putDoNotSyncMarkFlow" doc:name="putDoNotSyncMarkFlow">
-        <objectstore:all-keys config-ref="" doc:name="ObjectStore"/>
     </sub-flow>
     
     <sub-flow name="queryContactInTargetSystemFlow" doc:name="queryContactInTargetSystemFlow">
