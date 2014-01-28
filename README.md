@@ -27,16 +27,18 @@ Requirements have been set not only to be used as examples, but also to stablish
 # Run it! <a name="runit"/>
 
 In order to have your application up and running you just need to complete two simple steps:
-1. Configure the application properties
-2. Run it! (on premise or in Cloudhub)
 
-## Properties to be configured (with examples)<a name="propertiestobeconfigured"/>
+ 1. [Configure the application properties](#propertiestobeconfigured)
+ 2. Run it! ([on premise](#runonopremise) or [in Cloudhub](#runoncloudhub))
 
-In order to use this Mule Kick you need to configure properties (Credentials, configurations, etc.) either in properties file, or in CloudHub as Environment Variables. 
 
-Detail list with examples:
+## Properties to be configured<a name="propertiestobeconfigured"/>
 
-### Application configuration
+In order to use this Mule Kick you need to configure a couple of properties (credentials, configurations, etc.) either in properties file, or in CloudHub as Environment Variables. 
+
+### Detailed list of needed properties, with examples):
+
+#### Application configuration
 + polling.frequency `10000`  
 + watermark.default.expression `YESTERDAY`
 
@@ -63,6 +65,7 @@ Polling Frecuency is expressed in miliseconds (different time units can be used)
 The date format accepted in SFDC Query Language is either YYYY-MM-DDThh:mm:ss+hh:mm or you can use Constants (Like YESTERDAY in the example). [More information about Dates in SFDC.](http://www.salesforce.com/us/developer/docs/officetoolkit/Content/sforce_api_calls_soql_select_dateformats.htm)
 
 The query fields list must include both 'Email' and 'LastModifiedDate' fields, as those fields are embedded in the integration business logic
+
 
 ## Running on CloudHub <a name="runoncloudhub"/>
 
