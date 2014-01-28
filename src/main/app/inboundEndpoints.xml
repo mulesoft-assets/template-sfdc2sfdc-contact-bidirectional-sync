@@ -10,10 +10,10 @@ http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/m
 
     <flow name="triggerSyncronizationFromSalesforceInstanceAFlow" doc:name="triggerSyncronizationFromSalesforceInstanceAFlow" processingStrategy="synchronous">
 		<poll doc:name="Poll">
-            <fixed-frequency-scheduler frequency="${polling.frequency}" />
+            <fixed-frequency-scheduler frequency="${polling.frequency}" startDelay="10000"/>
             <watermark variable="lastQueryDateA" default-expression="${watermark.default.expression}" selector="MAX" selector-expression="#[payload.LastModifiedDate]"/>
              <sfdc:query-all config-ref="SalesforceA" doc:name="fetch contacts from Salesforce instance A with filtering criteria" 
-             	query="SELECT ${sfdc.query.fields} FROM Contact WHERE LastModifiedDate &gt; #[flowVars['lastQueryDateA']] AND Email != null ${sfdc.query.filters} ORDER BY LastModifiedDate ASC LIMIT 200"></sfdc:query-all>
+             	query="SELECT ${sfdc.query.fields} FROM Contact WHERE LastModifiedDate &gt; #[flowVars['lastQueryDateA']] AND Email != null ${sfdc.query.filters} ORDER BY LastModifiedDate ASC LIMIT 200" ></sfdc:query-all>
         </poll>
         <set-variable variableName="sourceSystem" value="A" doc:name="set sourceSystem to A" />
 		<flow-ref name="mainFlow" doc:name="call mainFlow"/>
@@ -21,10 +21,10 @@ http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/m
     
 	<flow name="triggerSyncronizationFromSalesforceInstanceBFlow" doc:name="triggerSyncronizationFromSalesforceInstanceBFlow" processingStrategy="synchronous">
 		<poll doc:name="Poll">
-            <fixed-frequency-scheduler frequency="${polling.frequency}" />
+            <fixed-frequency-scheduler frequency="${polling.frequency}" startDelay="10000"/>
             <watermark variable="lastQueryDateB" default-expression="${watermark.default.expression}" selector="MAX" selector-expression="#[payload.LastModifiedDate]"/>
              <sfdc:query-all config-ref="SalesforceB" doc:name="fetch contacts from Salesforce instance B with filtering criteria" 
-             	query="SELECT ${sfdc.query.fields} FROM Contact WHERE LastModifiedDate &gt; #[flowVars['lastQueryDateB']] AND Email != null ${sfdc.query.filters} ORDER BY LastModifiedDate ASC LIMIT 200"></sfdc:query-all>
+             	query="SELECT ${sfdc.query.fields} FROM Contact WHERE LastModifiedDate &gt; #[flowVars['lastQueryDateB']] AND Email != null ${sfdc.query.filters} ORDER BY LastModifiedDate ASC LIMIT 200" ></sfdc:query-all>
         </poll>
         <set-variable variableName="sourceSystem" value="B" doc:name="set sourceSystem to B" />
 		<flow-ref name="mainFlow" doc:name="call mainFlow"/>
