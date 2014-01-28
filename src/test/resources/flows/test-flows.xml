@@ -12,24 +12,26 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
 http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd">
     
-    <sub-flow name="createContactFlowInAFlow" doc:name="createContactFlowInAFlow">
+    <sub-flow name="createContactInAFlow" doc:name="createContactInAFlow">
         <sfdc:create config-ref="SalesforceA" type="Contact" doc:name="Salesforce">
-            <sfdc:objects ref="#[payload]"/>
+            <sfdc:objects />
         </sfdc:create>
     </sub-flow>
 
-    <sub-flow name="createContactFlowInBFlow" doc:name="createContactFlowInBFlow">
+    <sub-flow name="createContactInBFlow" doc:name="createContactInBFlow">
         <sfdc:create config-ref="SalesforceB" type="Contact" doc:name="Salesforce">
-            <sfdc:objects ref="#[payload]"/>
+            <sfdc:objects />
         </sfdc:create>
     </sub-flow>
     
     <sub-flow name="retrieveContactFromAFlow" doc:name="retrieveContactFromAFlow">
-        <sfdc:query-single config-ref="SalesforceA" query="SELECT FirstName, LastName, Email, Description FROM Contact WHERE (Email = '#[payload['Email']]' AND FirstName= '#[payload['FirstName']]' AND LastName= '#[payload['LastName']]' )" doc:name="Salesforce"/>
+        <sfdc:query-single config-ref="SalesforceA" query="SELECT FirstName, LastName, Email, Description FROM Contact WHERE (Email = '#[payload['Email']]'  )" doc:name="Salesforce"/>
+<!--         <sfdc:query-single config-ref="SalesforceA" query="SELECT FirstName, LastName, Email, Description FROM Contact WHERE (Email = '#[payload['Email']]' AND FirstName= '#[payload['FirstName']]' AND LastName= '#[payload['LastName']]' )" doc:name="Salesforce"/> -->
     </sub-flow>
 
     <sub-flow name="retrieveContactFromBFlow" doc:name="retrieveContactFromBFlow">
-        <sfdc:query-single config-ref="SalesforceB" query="SELECT FirstName, LastName, Email, Description FROM Contact WHERE (Email = '#[payload['Email']]' AND FirstName= '#[payload['FirstName']]' AND LastName= '#[payload['LastName']]' )" doc:name="Salesforce"/>
+        <sfdc:query-single config-ref="SalesforceB" query="SELECT FirstName, LastName, Email, Description FROM Contact WHERE (Email = '#[payload['Email']]'  )" doc:name="Salesforce"/>
+<!--         <sfdc:query-single config-ref="SalesforceB" query="SELECT FirstName, LastName, Email, Description FROM Contact WHERE (Email = '#[payload['Email']]' AND FirstName= '#[payload['FirstName']]' AND LastName= '#[payload['LastName']]' )" doc:name="Salesforce"/> -->
     </sub-flow>
     
     <sub-flow name="deleteContactFromAFlow" doc:name="deleteContactFromAFlow">
