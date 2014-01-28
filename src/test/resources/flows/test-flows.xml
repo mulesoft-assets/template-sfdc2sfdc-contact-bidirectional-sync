@@ -14,13 +14,13 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
     
     <sub-flow name="createContactInAFlow" doc:name="createContactInAFlow">
         <sfdc:create config-ref="SalesforceA" type="Contact" doc:name="Salesforce">
-            <sfdc:objects />
+            <sfdc:objects ref="#[payload]" />
         </sfdc:create>
     </sub-flow>
 
     <sub-flow name="createContactInBFlow" doc:name="createContactInBFlow">
         <sfdc:create config-ref="SalesforceB" type="Contact" doc:name="Salesforce">
-            <sfdc:objects />
+            <sfdc:objects ref="#[payload]" />
         </sfdc:create>
     </sub-flow>
     
@@ -33,7 +33,7 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
         <sfdc:query-single config-ref="SalesforceB" query="SELECT FirstName, LastName, Email, Description FROM Contact WHERE (Email = '#[payload['Email']]'  )" doc:name="Salesforce"/>
 <!--         <sfdc:query-single config-ref="SalesforceB" query="SELECT FirstName, LastName, Email, Description FROM Contact WHERE (Email = '#[payload['Email']]' AND FirstName= '#[payload['FirstName']]' AND LastName= '#[payload['LastName']]' )" doc:name="Salesforce"/> -->
     </sub-flow>
-    
+
     <sub-flow name="deleteContactFromAFlow" doc:name="deleteContactFromAFlow">
         <sfdc:delete config-ref="SalesforceA" doc:name="Salesforce">
             <sfdc:ids ref="#[payload]"/>
