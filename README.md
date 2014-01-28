@@ -15,6 +15,14 @@
 
 # Use Case <a name="usecase"/>
 
+As a Salesforce admin I want to have my Contacts syncronized between two different Salesforce orgs.
+
+This Kick/Template should serve as a foundation for setting an online bi-directional sync of Contacts between two SalesForce instances, being able to specify filtering criterias. 
+
+The integration main behaviour is polling for changes (new Contacts or modified ones) that have occured in any of the Salesforces instances during a certain defined period of time. For those Contacts that both have not been updated yet, and meet the requirements configured in the query, the integration triggers an upsert (update or create depending the case) taking the last modification as the one that should be applied.
+
+Requirements have been set not only to be used as examples, but also to stablish starting point to adapt the integration to any given requirements.
+
 
 # Run it! <a name="runit"/>
 
