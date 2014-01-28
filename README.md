@@ -26,7 +26,43 @@ Requirements have been set not only to be used as examples, but also to stablish
 
 # Run it! <a name="runit"/>
 
-Simple steps to get sfdc2sfdc-bidirectional-contact-sync running 
+In order to have your application up and running you just need to complete two simple steps:
+1. Configure the application properties
+2. Run it! (on premise or in Cloudhub)
+
+## Properties to be configured (with examples)<a name="propertiestobeconfigured"/>
+
+In order to use this Mule Kick you need to configure properties (Credentials, configurations, etc.) either in properties file, or in CloudHub as Environment Variables. 
+
+Detail list with examples:
+
+### Application configuration
++ polling.frequency `10000`  
++ watermark.default.expression `YESTERDAY`
+
+#### SalesForce Connector configuration for company A
++ sfdc.a.username `bob.dylan@orga`
++ sfdc.a.password `DylanPassword123`
++ sfdc.a.securityToken `avsfwCUl7apQs56Xq2AKi3X`
++ sfdc.a.url `https://login.salesforce.com/services/Soap/u/26.0`
+
+#### SalesForce Connector configuration for company B
++ sfdc.b.username `joan.baez@orgb`
++ sfdc.b.password `JoanBaez456`
++ sfdc.b.securityToken `ces56arl7apQs56XTddf34X`
++ sfdc.b.url `https://login.salesforce.com/services/Soap/u/26.0`
+
+#### Salesforce polling query parameters
++ sfdc.query.fields `Department, Description, Email, FirstName, HomePhone, LastModifiedDate, LastName, MailingCountry, MobilePhone, Title`
++ sfdc.query.filters `AND MailingCountry IN ('U.S.','United States','US')`
+
+### Some points to consider about configuration properties
+
+Polling Frecuency is expressed in miliseconds (different time units can be used) and the Watermark Default Expression defines the date to be used to query the first time the integration runs. [More details about polling and watermarking.](http://www.mulesoft.org/documentation/display/current/Poll+Reference)
+
+The date format accepted in SFDC Query Language is either YYYY-MM-DDThh:mm:ss+hh:mm or you can use Constants (Like YESTERDAY in the example). [More information about Dates in SFDC.](http://www.salesforce.com/us/developer/docs/officetoolkit/Content/sforce_api_calls_soql_select_dateformats.htm)
+
+The query fields list must include both 'Email' and 'LastModifiedDate' fields, as those fields are embedded in the integration business logic
 
 ## Running on CloudHub <a name="runoncloudhub"/>
 
@@ -38,10 +74,6 @@ Once your app is all set and started, supposing you choose as domain name `sfdc2
 Complete all properties in one of the property files, for example in [mule.prod.properties] (../blob/master/src/main/resources/mule.prod.properties) and run your app with the corresponding environment variable to use it. To follow the example, this will be `mule.env=prod`.
 
 After this, to trigger the use case you just need to hit the local http endpoint with the port you configured in your file. If this is, for instance, `9090` then you should hit: `http://localhost:9090/synccontacts` and this will create a CSV report and send it to the mails set.
-
-## Properties to be configured (With examples)<a name="propertiestobeconfigured"/>
-In order to use this Mule Kick you need to configure properties (Credentials, configurations, etc.) either in properties file or in CloudHub as Environment Variables. Detail list with examples:
-...
 
 # Customize It!<a name="customizeit"/>
 This brief guide intends to give a high level idea of how this Kick is built and how you can change it according to your needs.
