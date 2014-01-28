@@ -15,7 +15,6 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 
 		<logger level="INFO" message="~.~.~.~.~.~.~.~.~.~.~.~.~.~.~ Start synchronization from Salesforce instance #[sourceSystem] ~.~.~.~.~.~.~.~.~.~.~.~.~.~.~" doc:name="log to indicate that the synchronization has started"/>
 		<set-variable variableName="contactList" value="#[new java.util.ArrayList()]" doc:name="set contactList with an empty list"/>
-		<logger level="INFO" message="Contactos poleados AAAA: #[payload]" doc:name="log to indicate that the synchronization has started"/>
 		
         <foreach doc:name="For Each contact in the source instance that has been modified since the watermark...">
 	        <set-variable variableName="contactInSourceInstance" value="#[payload]" doc:name="set contactInSourceInstance with the current contact" />
