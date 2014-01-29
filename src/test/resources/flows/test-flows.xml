@@ -26,12 +26,10 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
     
     <sub-flow name="retrieveContactFromAFlow" doc:name="retrieveContactFromAFlow">
         <sfdc:query-single config-ref="SalesforceA" query="SELECT FirstName, LastName, Email, Description FROM Contact WHERE (Email = '#[payload['Email']]'  )" doc:name="Salesforce"/>
-<!--         <sfdc:query-single config-ref="SalesforceA" query="SELECT FirstName, LastName, Email, Description FROM Contact WHERE (Email = '#[payload['Email']]' AND FirstName= '#[payload['FirstName']]' AND LastName= '#[payload['LastName']]' )" doc:name="Salesforce"/> -->
     </sub-flow>
 
     <sub-flow name="retrieveContactFromBFlow" doc:name="retrieveContactFromBFlow">
         <sfdc:query-single config-ref="SalesforceB" query="SELECT FirstName, LastName, Email, Description FROM Contact WHERE (Email = '#[payload['Email']]'  )" doc:name="Salesforce"/>
-<!--         <sfdc:query-single config-ref="SalesforceB" query="SELECT FirstName, LastName, Email, Description FROM Contact WHERE (Email = '#[payload['Email']]' AND FirstName= '#[payload['FirstName']]' AND LastName= '#[payload['LastName']]' )" doc:name="Salesforce"/> -->
     </sub-flow>
 
     <sub-flow name="deleteContactFromAFlow" doc:name="deleteContactFromAFlow">
