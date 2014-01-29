@@ -18,10 +18,11 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 		
         <foreach doc:name="For Each contact in the source instance that has been modified since the watermark...">
 	        <set-variable variableName="contactInSourceInstance" value="#[payload]" doc:name="set contactInSourceInstance with the current contact" />
+	        <set-variable variableName="upsertContact" value="true" doc:name="set upsertContact with true as its default value" />
 	        <flow-ref name="synchronizeFlow" doc:name="call syncrhonizeFlow"/>
         </foreach>
         <choice doc:name="Choice">
-			<when evaluator="groovy" expression="return !(message.getInvocationProperty('contactList').isEmpty())">
+			<when expression="#[!(contactList.isEmpty())]">
 		        <set-payload value="#[contactList]" doc:name="set to list with contacts to be updated/created"/>
 				<flow-ref name="upsertContactInTargetSystemFlow" doc:name="call upsertContactInTargetSystemFlow"/>
 			</when>
@@ -36,8 +37,21 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
     </flow>
     
     <sub-flow name="synchronizeFlow" doc:name="synchronizeFlow">
+    	
 		<enricher source="#[payload]" target="#[flowVars['contactInTargetInstance']]" doc:name="store the contact details for the belonging contact in the target instance">
-	        <flow-ref name="queryContactInTargetSystemFlow" doc:name="call queryContactInTargetSystemFlow"/>
+			<processor-chain>
+				<logger level="INFO" message="Source Instance: #[sourceSystem]. Query: SELECT Id, FirstName, LastName, LastModifiedDate, Email FROM Contact WHERE Email = '#[payload['Email']]'" doc:name="Logger"/>
+				<choice doc:name="Choice">
+					<when expression="#[sourceSystem == 'A']">
+						<logger level="INFO" message="running Salesforce query for '#[payload['Email']]'" doc:name="Logger"/>
+		    	        <sfdc:query-single config-ref="SalesforceB" query="SELECT Id, FirstName, LastName, Email, LastModifiedDate FROM Contact WHERE (Email LIKE '#[payload['Email']]')" doc:name="Salesforce"/>
+					</when>
+					<otherwise>
+						<logger level="INFO" message="running Salesforce query for '#[payload['Email']]'" doc:name="Logger"/>
+		    	        <sfdc:query-single config-ref="SalesforceA" query="SELECT Id, FirstName, LastName, Email, LastModifiedDate FROM Contact WHERE (Email LIKE '#[payload['Email']]')" doc:name="Salesforce"/>
+					</otherwise>
+				</choice>
+		     </processor-chain>
        	</enricher>
         
         <logger level="INFO" message="Contact in source instance details: #[contactInSourceInstance]" doc:name="log contact details in source instance"/>
@@ -53,7 +67,7 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 		        <choice doc:name="Choice">
 		        	<!-- TODO: refactor using MEL flowVars['contactInTargetInstance']['LastModifiedDate'] -->
 		        	<!-- TODO: refactor using the bigger case first -->
-					<when evaluator="groovy" expression="return (message.getInvocationProperty('contactInTargetInstance').get('LastModifiedDate') >= message.getInvocationProperty('contactInSourceInstance').get('LastModifiedDate'))">
+					<when expression="#[(contactInTargetInstance.get('LastModifiedDate') >= contactInSourceInstance.get('LastModifiedDate'))]">
 				        <logger level="INFO" message="The contact's last update was made in the target instance. The integration will take care of it when polling goes in the other direction" doc:name="log that the contact's last update was made in the target instance so nothing should be done now"/>
 				        <set-variable variableName="upsertContact" value="false" doc:name="set upsertContact to false" />
 					</when>
@@ -62,7 +76,6 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 						
 						<objectstore:retrieve config-ref="ObjectStore" key="#[contactInTargetInstance.get('Email')]" defaultValue-ref="#[string:new update]"/>
 				        <choice doc:name="Choice">
-							<!-- <when evaluator="groovy" expression="return message.getPayload() == 'new update'"> -->
 							<when expression="#['new update'.equals(payload)]">
 						        <logger level="INFO" message="Proceeding with the update process..." doc:name="log 'Proceeding with the update process...'"/>
 						        <expression-component doc:name="prepare contact for upsert" >contactInSourceInstance.put('Id',flowVars['contactInTargetInstance'].get('Id')); contactInSourceInstance.remove('LastModifiedDate')</expression-component>
@@ -88,8 +101,8 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 		</choice>
 		
 		<choice doc:name="Choice">
-			<when evaluator="groovy" expression="return message.getInvocationProperty('upsertContact') == 'false'">
-				<set-variable variableName="upsertContact" value="true" doc:name="Variable" />
+			<when expression="#['false'.equals(upsertContact)]">
+				<logger level="DEBUG" message="If the Contact should not be created or updated, then it should not be added to contactList" />
 			</when>
 			<otherwise>
 		     	<expression-component doc:name="add Contact to contactList"><![CDATA[contactList.add(contactInSourceInstance)]]></expression-component>
@@ -97,24 +110,9 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 		</choice>
     </sub-flow>
     
-    <sub-flow name="queryContactInTargetSystemFlow" doc:name="queryContactInTargetSystemFlow">
-		<logger level="INFO" message="Source Instance: #[sourceSystem]. Query: SELECT Id, FirstName, LastName, LastModifiedDate, Email FROM Contact WHERE Email = '#[payload['Email']]'" doc:name="Logger"/>
-		<choice doc:name="Choice">
-			<when evaluator="groovy" expression="return message.getInvocationProperty('sourceSystem') == 'A'">
-<!-- 		    	<sfdc:query-single config-ref="SalesforceB" query="SELECT Id, FirstName, LastName, LastModifiedDate, Email FROM Contact WHERE Email = '#[payload['Email']]'" doc:name="Salesforce"/> -->
-    	        <sfdc:query-single config-ref="SalesforceB" query="SELECT Id, FirstName, LastName, Email, LastModifiedDate FROM Contact WHERE (Email LIKE '#[payload['Email']]')" doc:name="Salesforce"/>
-			</when>
-			<otherwise>
-    	        <sfdc:query-single config-ref="SalesforceA" query="SELECT Id, FirstName, LastName, Email, LastModifiedDate FROM Contact WHERE (Email LIKE '#[payload['Email']]')" doc:name="Salesforce"/>
-<!-- 		    	<sfdc:query-single config-ref="SalesforceA" query="SELECT Id, FirstName, LastName, LastModifiedDate, Email FROM Contact WHERE Email = '#[payload['Email']]'" doc:name="Salesforce"/> -->
-			</otherwise>
-		</choice>
-    	        <logger level="ERROR" message="query contact from the other system that is not #[sourceSystem] = #[payload]"></logger>
-    </sub-flow>
-    
     <sub-flow name="upsertContactInTargetSystemFlow" doc:name="upsertContactInTargetSystemFlow">
 		<choice doc:name="Choice">
-			<when evaluator="groovy" expression="return message.getInvocationProperty('sourceSystem') == 'A'">
+			<when expression="#[sourceSystem == 'A']">
 				<!-- If the source system is A, then the target system (the one where we should make the upsert on) should be B -->
 				<sfdc:upsert config-ref="SalesforceB" externalIdFieldName="Id" type="Contact" doc:name="upsert Contacts in Org B">
 		            <sfdc:objects ref="#[payload]"/>
