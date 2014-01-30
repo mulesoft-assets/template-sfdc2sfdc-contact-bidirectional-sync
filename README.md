@@ -69,7 +69,7 @@ The query fields list must include both 'Email' and 'LastModifiedDate' fields, a
 
 ## Running on CloudHub <a name="runoncloudhub"/>
 
-While [creating your application on CloudHub](http://www.mulesoft.org/documentation/display/current/Hello+World+on+CloudHub) (Or you can do it later as a next step), you need to go to Deployment > Advanced to set all environment variables detailed in **Properties to be configured** as well as the **mule.env**. 
+In order to [create your application on CloudHub](http://www.mulesoft.org/documentation/display/current/Hello+World+on+CloudHub) you should to go to Deployment > Advanced to set all environment variables detailed in **Properties to be configured** as well as the **mule.env**. 
 
 Once your app is all set and started, supposing you choose as domain name `sfdc2sfdc-bidirectional-contact-sync` to trigger the use case you just need to hit `http://sfdc2sfdc-bidirectional-contact-sync.cloudhub.io/synccontacts` and report will be sent to the emails configured.
 
