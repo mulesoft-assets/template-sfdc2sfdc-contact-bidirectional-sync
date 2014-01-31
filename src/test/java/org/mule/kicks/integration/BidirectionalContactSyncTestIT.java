@@ -18,6 +18,8 @@ import org.mule.MessageExchangePattern;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
 import org.mule.api.MuleMessage;
+import org.mule.api.schedule.Scheduler;
+import org.mule.api.schedule.Schedulers;
 import org.mule.construct.Flow;
 import org.mule.kicks.builders.ContactBuilder;
 import org.mule.processor.chain.SubflowInterceptingChainLifecycleWrapper;
@@ -45,12 +47,14 @@ public class BidirectionalContactSyncTestIT extends AbstractKickTestCase {
 	private static SubflowInterceptingChainLifecycleWrapper deleteContactFromBFlow;
 	private static SubflowInterceptingChainLifecycleWrapper retrieveContactFromAFlow;
 	private static SubflowInterceptingChainLifecycleWrapper retrieveContactFromBFlow;
+	private static SubflowInterceptingChainLifecycleWrapper queryContactFromAFlow;
+	private static SubflowInterceptingChainLifecycleWrapper queryContactFromBFlow;
 	private static Flow mainFlow;
 	
 	private final Prober workingPollProber = new PollingProber(1200000l,1000l);
 	
-	private List<String> contactsToBeDeletedInA;
-	private List<String> contactsToBeDeletedInB;
+	private List<String> contactsCreatedInA;
+	private List<String> contactsCreatedInB;
 
 	
     @BeforeClass
@@ -66,6 +70,7 @@ public class BidirectionalContactSyncTestIT extends AbstractKickTestCase {
 	
 	@Before
 	public void setUp() throws MuleException {
+		stopSchedulers();
 
 		// Flow for create contacts in source system
 		createContactInAFlow = getSubFlow("createContactInAFlow");
@@ -91,21 +96,29 @@ public class BidirectionalContactSyncTestIT extends AbstractKickTestCase {
 		retrieveContactFromBFlow = getSubFlow("retrieveContactFromBFlow");
 		retrieveContactFromBFlow.initialise();
 		
+		// Flow for querying the contact in source system
+		queryContactFromAFlow = getSubFlow("queryContactFromAFlow");
+		queryContactFromAFlow.initialise();
+		
+		// Flow for querying the contact in target system
+		queryContactFromBFlow = getSubFlow("queryContactFromBFlow");
+		queryContactFromBFlow.initialise();
+		
 		mainFlow = getFlow("mainFlow");
 
-		contactsToBeDeletedInA = new ArrayList<String>();
-		contactsToBeDeletedInB = new ArrayList<String>();
+		contactsCreatedInA = new ArrayList<String>();
+		contactsCreatedInB = new ArrayList<String>();
 	}
 
 	@After
 	public void tearDown() throws MuleException, Exception {
 		final List<String> idList = new ArrayList<String>();
-		for (String contact : contactsToBeDeletedInA) {
+		for (String contact : contactsCreatedInA) {
 			idList.add(contact);
 		}
 		deleteContactFromAFlow.process(getTestEvent(idList, MessageExchangePattern.REQUEST_RESPONSE));
 		idList.clear();
-		for (String contact : contactsToBeDeletedInB) {
+		for (String contact : contactsCreatedInB) {
 			idList.add(contact);
 		}
 		deleteContactFromBFlow.process(getTestEvent(idList, MessageExchangePattern.REQUEST_RESPONSE));
@@ -125,19 +138,15 @@ public class BidirectionalContactSyncTestIT extends AbstractKickTestCase {
 				.with("MailingCountry", "US")
 				.with("Email", KICK_NAME + SEPARATOR + "john.doe@mail.com");
 
-		Map<String, String> johnDoeWithBasicDescription = johnDoe //
-				.with("Description", "Please enter your description here") //
-				.build();
-		Map<String, String> johnDoeWithUpdatedDescription = johnDoe //
-				.with("Description", "John Doe is the man!") //
-				.build();
+		ContactBuilder johnDoeWithBasicDescription = johnDoe.with("Description", "Please enter your description here");
+		ContactBuilder johnDoeWithUpdatedDescription = johnDoe.with("Description", "John Doe is the man!");
 
 		// Create test contacts in Salesforce sandboxes
 		List<Map<String, String>> salesforceAContacts = new ArrayList<Map<String, String>>();
-		salesforceAContacts.add(johnDoeWithBasicDescription);
+		salesforceAContacts.add(johnDoeWithBasicDescription.build());
 
 		List<Map<String, String>> salesforceBContacts = new ArrayList<Map<String, String>>();
-		salesforceBContacts.add(johnDoeWithUpdatedDescription);
+		salesforceBContacts.add(johnDoeWithUpdatedDescription.build());
 
 		final List<SaveResult> payloadAfterExecutionInA = (List<SaveResult>) createContactInAFlow.process(getTestEvent(salesforceAContacts, MessageExchangePattern.REQUEST_RESPONSE))
 				.getMessage().getPayload();
@@ -145,15 +154,86 @@ public class BidirectionalContactSyncTestIT extends AbstractKickTestCase {
 		final List<SaveResult> payloadAfterExecutionInB = (List<SaveResult>) createContactInBFlow.process(getTestEvent(salesforceBContacts, MessageExchangePattern.REQUEST_RESPONSE))
 				.getMessage().getPayload();
 		
-		contactsToBeDeletedInA.add(payloadAfterExecutionInA.get(0).getId());
-		contactsToBeDeletedInB.add(payloadAfterExecutionInB.get(0).getId());
+		contactsCreatedInA.add(payloadAfterExecutionInA.get(0).getId());
+		contactsCreatedInB.add(payloadAfterExecutionInB.get(0).getId());
 		
 		checkThatTheContactsHaveBeenSuccessfullyCreated(johnDoe);
 
-		// Prepare the Mule Event to be processed
+		List<Map<String, String>> contactInB = (List<Map<String, String>>) retrieveContactFromBFlow.process(getTestEvent(payloadAfterExecutionInB.get(0).getId(), MessageExchangePattern.REQUEST_RESPONSE)).getMessage().getPayload();
 		Collection<Map<String, String>> contactUpdatesList = new ArrayList<Map<String,String>>();
-		contactUpdatesList.add(johnDoeWithBasicDescription);
+		contactUpdatesList.add(johnDoeWithUpdatedDescription.with("LastModifiedDate", contactInB.get(0).get("LastModifiedDate")).build());
 		
+		// Prepare the Mule Event to be processed
+		Object payload = contactUpdatesList;
+		MuleMessage message = new DefaultMuleMessage(payload, muleContext);
+		message.setInvocationProperty("sourceSystem", "B");
+		MuleEvent event = getTestEvent("");
+		event.setMessage(message);
+		
+		
+		/*
+		 * Execution
+		 */
+		
+		mainFlow.process(event);
+		
+		
+		/*
+		 * Assertions
+		 */
+		
+		workingPollProber.check(new AssertionProbe() {
+			@Override
+			public void assertSatisfied() throws Exception {
+				Map<String, String> retrievedContactFromA = (Map<String, String>) queryContactFromAFlow.process(getTestEvent(johnDoe.build(), MessageExchangePattern.REQUEST_RESPONSE)).getMessage().getPayload();
+				Map<String, String> retrievedContactFromB =  (Map<String, String>) queryContactFromBFlow.process(getTestEvent(johnDoe.build(), MessageExchangePattern.REQUEST_RESPONSE)).getMessage().getPayload();
+				
+				final MapDifference<String, String> mapsDifference = Maps.difference(retrievedContactFromA, retrievedContactFromB);
+				Assert.assertTrue("Some contacts are not synchronized between systems. " + mapsDifference.toString(), mapsDifference.areEqual());
+			}
+		});
+	}
+	
+	@Test
+	public void noChangesOccurWhenTheLastUpdateForAContactHasBeenMadeInTheTargetSystem() throws Exception {
+		
+		/*
+		 * Preparation
+		 */
+		
+		// Build test contacts
+		final ContactBuilder johnDoe = aContact() //
+				.with("FirstName", "John") //
+				.with("LastName", "Doe") //
+				.with("MailingCountry", "US")
+				.with("Email", KICK_NAME + SEPARATOR + "john.doe@mail.com");
+		
+		ContactBuilder johnDoeWithBasicDescription = johnDoe.with("Description", "Please enter your description here");
+		final ContactBuilder johnDoeWithUpdatedDescription = johnDoe.with("Description", "John Doe is the man!");
+		
+		// Create test contacts in Salesforce sandboxes
+		List<Map<String, String>> salesforceAContacts = new ArrayList<Map<String, String>>();
+		salesforceAContacts.add(johnDoeWithBasicDescription.build());
+		
+		List<Map<String, String>> salesforceBContacts = new ArrayList<Map<String, String>>();
+		salesforceBContacts.add(johnDoeWithUpdatedDescription.build());
+		
+		final List<SaveResult> payloadAfterExecutionInA = (List<SaveResult>) createContactInAFlow.process(getTestEvent(salesforceAContacts, MessageExchangePattern.REQUEST_RESPONSE))
+				.getMessage().getPayload();
+		
+		final List<SaveResult> payloadAfterExecutionInB = (List<SaveResult>) createContactInBFlow.process(getTestEvent(salesforceBContacts, MessageExchangePattern.REQUEST_RESPONSE))
+				.getMessage().getPayload();
+		
+		contactsCreatedInA.add(payloadAfterExecutionInA.get(0).getId());
+		contactsCreatedInB.add(payloadAfterExecutionInB.get(0).getId());
+		
+		checkThatTheContactsHaveBeenSuccessfullyCreated(johnDoe);
+		
+		List<Map<String, String>> contactInA = (List<Map<String, String>>) retrieveContactFromAFlow.process(getTestEvent(payloadAfterExecutionInA.get(0).getId(), MessageExchangePattern.REQUEST_RESPONSE)).getMessage().getPayload();
+		Collection<Map<String, String>> contactUpdatesList = new ArrayList<Map<String,String>>();
+		contactUpdatesList.add(johnDoeWithBasicDescription.with("LastModifiedDate", contactInA.get(0).get("LastModifiedDate")).build());
+		
+		// Prepare the Mule Event to be processed
 		Object payload = contactUpdatesList;
 		MuleMessage message = new DefaultMuleMessage(payload, muleContext);
 		message.setInvocationProperty("sourceSystem", "A");
@@ -175,11 +255,9 @@ public class BidirectionalContactSyncTestIT extends AbstractKickTestCase {
 		workingPollProber.check(new AssertionProbe() {
 			@Override
 			public void assertSatisfied() throws Exception {
-				Map<String, String> retrievedContactFromA = (Map<String, String>) retrieveContactFromAFlow.process(getTestEvent(johnDoe.build(), MessageExchangePattern.REQUEST_RESPONSE)).getMessage().getPayload();
-				Map<String, String> retrievedContactFromB =  (Map<String, String>) retrieveContactFromBFlow.process(getTestEvent(johnDoe.build(), MessageExchangePattern.REQUEST_RESPONSE)).getMessage().getPayload();
+				Map<String, String> retrievedContactFromB =  (Map<String, String>) queryContactFromBFlow.process(getTestEvent(johnDoe.build(), MessageExchangePattern.REQUEST_RESPONSE)).getMessage().getPayload();
 				
-				final MapDifference<String, String> mapsDifference = Maps.difference(retrievedContactFromA, retrievedContactFromB);
-				Assert.assertTrue("Some contacts are not synchronized between systems. " + mapsDifference.toString(), mapsDifference.areEqual());
+				Assert.assertTrue("The Contact in B has been updated when it should not", (johnDoeWithUpdatedDescription.build().get("Description").equals(retrievedContactFromB.get("Description"))));
 			}
 		});
 	}
@@ -188,13 +266,26 @@ public class BidirectionalContactSyncTestIT extends AbstractKickTestCase {
 		workingPollProber.check(new AssertionProbe() {
 			@Override
 			public void assertSatisfied() throws Exception {
-				Map<String, String> retrievedContactFromA = (Map<String, String>) retrieveContactFromAFlow.process(getTestEvent(contact.build(), MessageExchangePattern.REQUEST_RESPONSE)).getMessage().getPayload();
-				Map<String, String> retrievedContactFromB =  (Map<String, String>) retrieveContactFromBFlow.process(getTestEvent(contact.build(), MessageExchangePattern.REQUEST_RESPONSE)).getMessage().getPayload();
+				Map<String, String> retrievedContactFromA = (Map<String, String>) queryContactFromAFlow.process(getTestEvent(contact.build(), MessageExchangePattern.REQUEST_RESPONSE)).getMessage().getPayload();
+				Map<String, String> retrievedContactFromB =  (Map<String, String>) queryContactFromBFlow.process(getTestEvent(contact.build(), MessageExchangePattern.REQUEST_RESPONSE)).getMessage().getPayload();
 				
 				assertNotNull("Contact in A is null", retrievedContactFromA);
 				assertNotNull("Contact in B is null", retrievedContactFromB);
 			}
 		});
+	}
+	
+	
+	// ***************************************************************
+	// ======== Schedulers management methods ========
+	// ***************************************************************
+	
+	private void stopSchedulers() throws MuleException {
+		 final Collection<Scheduler> schedulers = muleContext.getRegistry().lookupScheduler(Schedulers.allPollSchedulers());
+		 
+		 for (final Scheduler scheduler : schedulers) {
+			 scheduler.stop();
+		 }
 	}
 
 }
