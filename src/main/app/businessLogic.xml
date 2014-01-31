@@ -1,127 +1,186 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:objectstore="http://www.mulesoft.org/schema/mule/objectstore" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" 	xmlns="http://www.mulesoft.org/schema/mule/core" 
-	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:spring="http://www.springframework.org/schema/beans" 
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<mule xmlns:objectstore="http://www.mulesoft.org/schema/mule/objectstore"
+	xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc"
 	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
 http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
 http://www.mulesoft.org/schema/mule/objectstore http://www.mulesoft.org/schema/mule/objectstore/current/mule-objectstore.xsd
-http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd" version="EE-3.5.0">
-    
-    <flow name="mainFlow" processingStrategy="synchronous" doc:name="mainFlow">
-        <expression-component doc:name="try to gain access to the Semaphore"><![CDATA[#[app.registry['PollSemaphore'].acquireLock()]]]></expression-component>
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd"
+	version="EE-3.5.0">
 
-		<logger level="INFO" message="~.~.~.~.~.~.~.~.~.~.~.~.~.~.~ Start synchronization from Salesforce instance #[sourceSystem] ~.~.~.~.~.~.~.~.~.~.~.~.~.~.~" doc:name="log to indicate that the synchronization has started"/>
-		<set-variable variableName="contactList" value="#[new java.util.ArrayList()]" doc:name="set contactList with an empty list"/>
-		
-        <foreach doc:name="For Each contact in the source instance that has been modified since the watermark...">
-	        <set-variable variableName="contactInSourceInstance" value="#[payload]" doc:name="set contactInSourceInstance with the current contact" />
-	        <set-variable variableName="upsertContact" value="true" doc:name="set upsertContact with true as its default value" />
-	        <flow-ref name="synchronizeFlow" doc:name="call syncrhonizeFlow"/>
-        </foreach>
-        <choice doc:name="Choice">
+	<flow name="mainFlow" processingStrategy="synchronous" doc:name="mainFlow">
+		<expression-component doc:name="try to gain access to the Semaphore"><![CDATA[#[app.registry['PollSemaphore'].acquireLock()]]]></expression-component>
+
+		<logger level="INFO"
+			message="~.~.~.~.~.~.~.~.~.~.~.~.~.~.~ Start synchronization from Salesforce instance #[sourceSystem] ~.~.~.~.~.~.~.~.~.~.~.~.~.~.~"
+			doc:name="log to indicate that the synchronization has started" />
+		<set-variable variableName="contactList" value="#[new java.util.ArrayList()]"
+			doc:name="set contactList with an empty list" />
+
+		<foreach
+			doc:name="For Each contact in the source instance that has been modified since the watermark...">
+			<set-variable variableName="contactInSourceInstance"
+				value="#[payload]" doc:name="set contactInSourceInstance with the current contact" />
+			<set-variable variableName="upsertContact" value="true"
+				doc:name="set upsertContact with true as its default value" />
+			<flow-ref name="synchronizeFlow" doc:name="call syncrhonizeFlow" />
+		</foreach>
+		<choice doc:name="Choice">
 			<when expression="#[!(contactList.isEmpty())]">
-		        <set-payload value="#[contactList]" doc:name="set to list with contacts to be updated/created"/>
-				<flow-ref name="upsertContactInTargetSystemFlow" doc:name="call upsertContactInTargetSystemFlow"/>
+				<set-payload value="#[contactList]"
+					doc:name="set to list with contacts to be updated/created" />
+				<flow-ref name="upsertContactInTargetSystemFlow" doc:name="call upsertContactInTargetSystemFlow" />
 			</when>
 			<otherwise>
-				<logger level="INFO" message="No updates or new contacts to be sync" doc:name="log 'No updates or new contacts to be sync'"/>
+				<logger level="INFO" message="No updates or new contacts to be sync"
+					doc:name="log 'No updates or new contacts to be sync'" />
 			</otherwise>
 		</choice>
 
-        <expression-component doc:name="release access to the Semaphore"><![CDATA[#[app.registry['PollSemaphore'].releaseLock()]]]></expression-component>
-        
-        <exception-strategy ref="defaultChoiceExceptionStrategy" doc:name="catch Exception and call defaultChoiceExceptionStrategy"/>
-    </flow>
-    
-    <sub-flow name="synchronizeFlow" doc:name="synchronizeFlow">
-    	
-		<enricher source="#[payload]" target="#[flowVars['contactInTargetInstance']]" doc:name="store the contact details for the belonging contact in the target instance">
+		<expression-component doc:name="release access to the Semaphore"><![CDATA[#[app.registry['PollSemaphore'].releaseLock()]]]></expression-component>
+
+		<exception-strategy ref="defaultChoiceExceptionStrategy"
+			doc:name="catch Exception and call defaultChoiceExceptionStrategy" />
+	</flow>
+
+	<sub-flow name="synchronizeFlow" doc:name="synchronizeFlow">
+
+		<enricher source="#[payload]" target="#[flowVars['contactInTargetInstance']]"
+			doc:name="store the contact details for the belonging contact in the target instance">
 			<processor-chain doc:name="Processor Chain">
 				<choice doc:name="Choice">
 					<when expression="#[sourceSystem == 'A']">
-		    	        <sfdc:query-single config-ref="SalesforceB" query="SELECT Id, FirstName, LastName, Email, LastModifiedDate FROM Contact WHERE (Email LIKE '#[payload['Email']]')" doc:name="query contact from Salesforce B instance"/>
+						<sfdc:query-single config-ref="SalesforceB"
+							query="SELECT Id, FirstName, LastName, Email, LastModifiedDate FROM Contact WHERE (Email LIKE '#[payload['Email']]')"
+							doc:name="query contact from Salesforce B instance" />
 					</when>
 					<otherwise>
-		    	        <sfdc:query-single config-ref="SalesforceA" query="SELECT Id, FirstName, LastName, Email, LastModifiedDate FROM Contact WHERE (Email LIKE '#[payload['Email']]')" doc:name="query contact from Salesforce A instance"/>
+						<sfdc:query-single config-ref="SalesforceA"
+							query="SELECT Id, FirstName, LastName, Email, LastModifiedDate FROM Contact WHERE (Email LIKE '#[payload['Email']]')"
+							doc:name="query contact from Salesforce A instance" />
 					</otherwise>
 				</choice>
-		     </processor-chain>
-       	</enricher>
-        
-        <logger level="INFO" message="Contact in source instance details: #[contactInSourceInstance]" doc:name="log contact details in source instance"/>
-        <logger level="INFO" message="Contact in target instance details: #[contactInTargetInstance]" doc:name="log contact details in target instance"/>
-        
-        <choice doc:name="Choice">
-		    <when expression="#[contactInTargetInstance is org.mule.transport.NullPayload]">
-		        <logger level="INFO" message="The Contact in source instance does not exist in target instance; so, it should be created" doc:name="log that the contact does not exist in target instance, so it should be created"/>
-		        <expression-component doc:name="prepare contact for upsert" >contactInSourceInstance.remove('Id'); contactInSourceInstance.remove('LastModifiedDate')</expression-component>
-		    </when>
-		    <otherwise>
-		        <logger level="INFO" message="It exists a contact in the target instance with the same email as the one in source instance" doc:name="log that the does exist in target instance"/>
-		        <choice doc:name="Choice">
-		        	<!-- TODO: refactor using the bigger case first -->
-					<when expression="#[(contactInTargetInstance.get('LastModifiedDate') >= contactInSourceInstance.get('LastModifiedDate'))]">
-				        <logger level="INFO" message="The contact's last update was made in the target instance. The integration will take care of it when polling goes in the other direction" doc:name="log that the contact's last update was made in the target instance so nothing should be done now"/>
-				        <set-variable variableName="upsertContact" value="false" doc:name="set upsertContact to false" />
+			</processor-chain>
+		</enricher>
+
+		<logger level="INFO"
+			message="Contact in source instance details: #[contactInSourceInstance]"
+			doc:name="log contact details in source instance" />
+		<logger level="INFO"
+			message="Contact in target instance details: #[contactInTargetInstance]"
+			doc:name="log contact details in target instance" />
+
+		<choice doc:name="Choice">
+			<when expression="#[contactInTargetInstance is org.mule.transport.NullPayload]">
+				<logger level="INFO"
+					message="The Contact in source instance does not exist in target instance; so, it should be created"
+					doc:name="log that the contact does not exist in target instance, so it should be created" />
+				<expression-component doc:name="prepare contact for upsert">
+					contactInSourceInstance.remove('Id');
+					contactInSourceInstance.remove('LastModifiedDate')
+				</expression-component>
+			</when>
+			<otherwise>
+				<logger level="INFO"
+					message="It exists a contact in the target instance with the same email as the one in source instance"
+					doc:name="log that the does exist in target instance" />
+				<choice doc:name="Choice">
+					<!-- TODO: refactor using the bigger case first -->
+					<when
+						expression="#[(contactInTargetInstance.get('LastModifiedDate') >= contactInSourceInstance.get('LastModifiedDate'))]">
+						<logger level="INFO"
+							message="The contact's last update was made in the target instance. The integration will take care of it when polling goes in the other direction"
+							doc:name="log that the contact's last update was made in the target instance so nothing should be done now" />
+						<set-variable variableName="upsertContact" value="false"
+							doc:name="set upsertContact to false" />
 					</when>
 					<otherwise>
-				        <logger level="DEBUG" message="The contact's last update was made in the source instance" doc:name="log that the contact's last update was made in the source instance"/>
-						
-						<objectstore:retrieve config-ref="ObjectStore" key="#[contactInTargetInstance.get('Email')]" defaultValue-ref="#[string:new update]" doc:name="retrieve the Contact in the ObjectStore (based on its email)"/>
-				        <choice doc:name="Choice">
+						<logger level="DEBUG"
+							message="The contact's last update was made in the source instance"
+							doc:name="log that the contact's last update was made in the source instance" />
+
+						<objectstore:retrieve config-ref="ObjectStore"
+							key="#[contactInTargetInstance.get('Email')]" defaultValue-ref="#[string:new update]"
+							doc:name="retrieve the Contact in the ObjectStore (based on its email)" />
+						<choice doc:name="Choice">
 							<when expression="#['new update'.equals(payload)]">
-						        <logger level="INFO" message="Proceeding with the update process..." doc:name="log 'Proceeding with the update process...'"/>
-						        <expression-component doc:name="prepare contact for upsert" >contactInSourceInstance.put('Id',flowVars['contactInTargetInstance'].get('Id')); contactInSourceInstance.remove('LastModifiedDate')</expression-component>
-						        <expression-component doc:name="get contact identifier hash-code">payload = org.mule.kicks.compare.SalesforceContactIdentity.hashCode(contactInSourceInstance)</expression-component>
-								<objectstore:store config-ref="ObjectStore" key="#[contactInTargetInstance.get('Email')]" value-ref="#[payload]" overwrite="true" doc:name="store the Contact in the ObjectStore (based on its email)"/>
+								<logger level="INFO" message="Proceeding with the update process..."
+									doc:name="log 'Proceeding with the update process...'" />
+								<expression-component doc:name="prepare contact for upsert">
+									contactInSourceInstance.put('Id',flowVars['contactInTargetInstance'].get('Id'));
+									contactInSourceInstance.remove('LastModifiedDate')
+								</expression-component>
+								<expression-component doc:name="get contact identifier hash-code">payload =
+									org.mule.kicks.compare.SalesforceContactIdentity.hashCode(contactInSourceInstance)
+								</expression-component>
+								<objectstore:store config-ref="ObjectStore"
+									key="#[contactInTargetInstance.get('Email')]" value-ref="#[payload]"
+									overwrite="true"
+									doc:name="store the Contact in the ObjectStore (based on its email)" />
 							</when>
 							<otherwise>
 								<choice doc:name="Choice">
-								    <when expression="#[payload == org.mule.kicks.compare.SalesforceContactIdentity.hashCode(contactInSourceInstance)]">
-								        <logger level="INFO" message="Cicle update detected! The contact's last modification belongs to the one made in the previous sync. Nothing should be done" doc:name="log that a cycle update was detected"/>
-								        <set-variable variableName="upsertContact" value="false" doc:name="set upsertContact to false" />
-								    </when>
-								    <otherwise>
-								        <logger level="INFO" message="The contact in the target instance has been modified after the previous sync. The integration will take care of it when polling goes in the other direction" doc:name="log that the contact in the target instance has been modified after the previous sync so nothing should be done now"/>
-								    </otherwise>
+									<when
+										expression="#[payload == org.mule.kicks.compare.SalesforceContactIdentity.hashCode(contactInSourceInstance)]">
+										<logger level="INFO"
+											message="Cicle update detected! The contact's last modification belongs to the one made in the previous sync. Nothing should be done"
+											doc:name="log that a cycle update was detected" />
+										<set-variable variableName="upsertContact" value="false"
+											doc:name="set upsertContact to false" />
+									</when>
+									<otherwise>
+										<logger level="INFO"
+											message="The contact in the target instance has been modified after the previous sync. The integration will take care of it when polling goes in the other direction"
+											doc:name="log that the contact in the target instance has been modified after the previous sync so nothing should be done now" />
+									</otherwise>
 								</choice>
-								<objectstore:remove config-ref="ObjectStore" key="#[contactInTargetInstance.get('Email')]" doc:name="remove the Contact from the ObjectStore (based on its email)"/>
+								<objectstore:remove config-ref="ObjectStore"
+									key="#[contactInTargetInstance.get('Email')]"
+									doc:name="remove the Contact from the ObjectStore (based on its email)" />
 							</otherwise>
 						</choice>
 					</otherwise>
 				</choice>
-		    </otherwise>
+			</otherwise>
 		</choice>
-		
+
 		<choice doc:name="Choice">
 			<when expression="#['false'.equals(upsertContact)]">
-				<logger level="DEBUG" message="If the Contact should not be created or updated, then it should not be added to contactList" doc:name="log 'If the Contact should not be created or updated, then it should not be added to contactList'"/>
+				<logger level="DEBUG"
+					message="If the Contact should not be created or updated, then it should not be added to contactList"
+					doc:name="log 'If the Contact should not be created or updated, then it should not be added to contactList'" />
 			</when>
 			<otherwise>
-		     	<expression-component doc:name="add Contact to contactList"><![CDATA[contactList.add(contactInSourceInstance)]]></expression-component>
+				<expression-component doc:name="add Contact to contactList"><![CDATA[contactList.add(contactInSourceInstance)]]></expression-component>
 			</otherwise>
 		</choice>
-    </sub-flow>
-    
-    <sub-flow name="upsertContactInTargetSystemFlow" doc:name="upsertContactInTargetSystemFlow">
+	</sub-flow>
+
+	<sub-flow name="upsertContactInTargetSystemFlow" doc:name="upsertContactInTargetSystemFlow">
 		<choice doc:name="Choice">
 			<when expression="#[sourceSystem == 'A']">
-				<!-- If the source system is A, then the target system (the one where we should make the upsert on) should be B -->
-				<sfdc:upsert config-ref="SalesforceB" externalIdFieldName="Id" type="Contact" doc:name="upsert Contacts in Org B">
-		            <sfdc:objects ref="#[payload]"/>
-		        </sfdc:upsert>
+				<!-- If the source system is A, then the target system (the one where 
+					we should make the upsert on) should be B -->
+				<sfdc:upsert config-ref="SalesforceB"
+					externalIdFieldName="Id" type="Contact" doc:name="upsert Contacts in Org B">
+					<sfdc:objects ref="#[payload]" />
+				</sfdc:upsert>
 			</when>
 			<otherwise>
-				<!-- If the source system is not A, then its B; so, the target system is A -->
-				<sfdc:upsert config-ref="SalesforceA" externalIdFieldName="Id" type="Contact" doc:name="upsert Contacts in Org A">
-		            <sfdc:objects ref="#[payload]"/>
-		        </sfdc:upsert>
+				<!-- If the source system is not A, then its B; so, the target system 
+					is A -->
+				<sfdc:upsert config-ref="SalesforceA"
+					externalIdFieldName="Id" type="Contact" doc:name="upsert Contacts in Org A">
+					<sfdc:objects ref="#[payload]" />
+				</sfdc:upsert>
 			</otherwise>
 		</choice>
-		<logger level="INFO" message="Upsert Salesforce response: #[payload]" doc:name="log upsert Salesforce response"/>
-    </sub-flow>
-    
+		<logger level="INFO" message="Upsert Salesforce response: #[payload]"
+			doc:name="log upsert Salesforce response" />
+	</sub-flow>
+
 </mule>
