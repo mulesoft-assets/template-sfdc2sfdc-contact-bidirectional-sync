@@ -19,7 +19,6 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
         <foreach doc:name="For Each contact in the source instance that has been modified since the watermark...">
 	        <set-variable variableName="contactInSourceInstance" value="#[payload]" doc:name="set contactInSourceInstance with the current contact" />
 	        <set-variable variableName="upsertContact" value="true" doc:name="set upsertContact with true as its default value" />
-			<logger level="INFO" message=">>> Contact to be synchronized details: #[contactInSourceInstance]" doc:name="log contact to be synchronized details"/>
 	        <flow-ref name="synchronizeFlow" doc:name="call syncrhonizeFlow"/>
         </foreach>
         <choice doc:name="Choice">
@@ -41,14 +40,11 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
     	
 		<enricher source="#[payload]" target="#[flowVars['contactInTargetInstance']]" doc:name="store the contact details for the belonging contact in the target instance">
 			<processor-chain doc:name="Processor Chain">
-				<logger level="INFO" message="Source Instance: #[sourceSystem]. Query: SELECT Id, FirstName, LastName, LastModifiedDate, Email FROM Contact WHERE Email = '#[payload['Email']]'" doc:name="debug logger"/>
 				<choice doc:name="Choice">
 					<when expression="#[sourceSystem == 'A']">
-						<logger level="INFO" message="running Salesforce query in instance B for '#[payload['Email']]'" doc:name="debug logger"/>
 		    	        <sfdc:query-single config-ref="SalesforceB" query="SELECT Id, FirstName, LastName, Email, LastModifiedDate FROM Contact WHERE (Email LIKE '#[payload['Email']]')" doc:name="query contact from Salesforce B instance"/>
 					</when>
 					<otherwise>
-						<logger level="INFO" message="running Salesforce query in instance A for '#[payload['Email']]'" doc:name="debug logger"/>
 		    	        <sfdc:query-single config-ref="SalesforceA" query="SELECT Id, FirstName, LastName, Email, LastModifiedDate FROM Contact WHERE (Email LIKE '#[payload['Email']]')" doc:name="query contact from Salesforce A instance"/>
 					</otherwise>
 				</choice>
