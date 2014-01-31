@@ -136,7 +136,7 @@ public class BidirectionalContactSyncTestIT extends AbstractKickTestCase {
 				.with("FirstName", "John") //
 				.with("LastName", "Doe") //
 				.with("MailingCountry", "US")
-				.with("Email", KICK_NAME + SEPARATOR + "john.doe@mail.com");
+				.with("Email", KICK_NAME + SEPARATOR + System.currentTimeMillis() + "john.doe@mail.com");
 
 		ContactBuilder johnDoeWithBasicDescription = johnDoe.with("Description", "Please enter your description here");
 		ContactBuilder johnDoeWithUpdatedDescription = johnDoe.with("Description", "John Doe is the man!");
@@ -206,7 +206,7 @@ public class BidirectionalContactSyncTestIT extends AbstractKickTestCase {
 				.with("FirstName", "John") //
 				.with("LastName", "Doe") //
 				.with("MailingCountry", "US")
-				.with("Email", KICK_NAME + SEPARATOR + "john.doe@mail.com");
+				.with("Email", KICK_NAME + SEPARATOR + System.currentTimeMillis() + "john.doe@mail.com");
 		
 		ContactBuilder johnDoeWithBasicDescription = johnDoe.with("Description", "Please enter your description here");
 		final ContactBuilder johnDoeWithUpdatedDescription = johnDoe.with("Description", "John Doe is the man!");
