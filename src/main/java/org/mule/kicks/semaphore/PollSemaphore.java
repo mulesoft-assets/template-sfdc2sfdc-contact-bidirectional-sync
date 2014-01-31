@@ -6,8 +6,7 @@ import org.mule.api.MuleContext;
 import org.mule.api.context.MuleContextAware;
 
 /**
- * This class objective is to create a critical area around the application in
- * order to stop that two what ever threads access the area if other is in it.
+ * This class objective is to create a critical area around the application in order to stop that two what ever threads access the area if other is in it.
  * 
  * @author javiercasal
  */
@@ -30,7 +29,8 @@ public class PollSemaphore implements MuleContextAware {
 	}
 
 	private Lock getLock() {
-		return muleContext.getLockFactory().createLock(LOCK_ID);
+		return muleContext.getLockFactory()
+							.createLock(LOCK_ID);
 	}
 
 }

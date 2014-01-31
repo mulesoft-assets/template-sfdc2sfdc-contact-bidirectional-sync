@@ -28,7 +28,8 @@ public class AbstractKickTestCase extends FunctionalTestCase {
 
 	@AfterClass
 	public static void afterClass() {
-		System.getProperties().remove("mule.env");
+		System.getProperties()
+				.remove("mule.env");
 	}
 
 	@Override
@@ -47,21 +48,24 @@ public class AbstractKickTestCase extends FunctionalTestCase {
 	}
 
 	protected String getTestFlows() {
-            StringBuilder resources = new StringBuilder();
+		StringBuilder resources = new StringBuilder();
 
-            File testFlowsFolder = new File(TEST_FLOWS_FOLDER_PATH);
-            File[] listOfFiles = testFlowsFolder.listFiles();
-            if (listOfFiles != null) {
-                    for (File f : listOfFiles) {
-                            if (f.isFile() && f.getName().endsWith("xml")) {
-                                    resources.append(",").append(TEST_FLOWS_FOLDER_PATH).append(f.getName());
-                            }
-                    }
-                    return resources.toString();
-            } else {
-                    return "";
-            }
-        }
+		File testFlowsFolder = new File(TEST_FLOWS_FOLDER_PATH);
+		File[] listOfFiles = testFlowsFolder.listFiles();
+		if (listOfFiles != null) {
+			for (File f : listOfFiles) {
+				if (f.isFile() && f.getName()
+									.endsWith("xml")) {
+					resources.append(",")
+								.append(TEST_FLOWS_FOLDER_PATH)
+								.append(f.getName());
+				}
+			}
+			return resources.toString();
+		} else {
+			return "";
+		}
+	}
 
 	@Override
 	protected Properties getStartUpProperties() {
@@ -76,11 +80,13 @@ public class AbstractKickTestCase extends FunctionalTestCase {
 	}
 
 	protected Flow getFlow(String flowName) {
-		return (Flow) muleContext.getRegistry().lookupObject(flowName);
+		return (Flow) muleContext.getRegistry()
+									.lookupObject(flowName);
 	}
 
 	protected static SubflowInterceptingChainLifecycleWrapper getSubFlow(String flowName) {
-		return (SubflowInterceptingChainLifecycleWrapper) muleContext.getRegistry().lookupObject(flowName);
+		return (SubflowInterceptingChainLifecycleWrapper) muleContext.getRegistry()
+																		.lookupObject(flowName);
 	}
 
 }
