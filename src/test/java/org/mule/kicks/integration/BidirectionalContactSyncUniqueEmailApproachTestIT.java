@@ -22,6 +22,7 @@ import org.mule.api.schedule.Scheduler;
 import org.mule.api.schedule.Schedulers;
 import org.mule.construct.Flow;
 import org.mule.kicks.builders.ContactBuilder;
+import org.mule.kicks.integration.AbstractKickTestCase;
 import org.mule.processor.chain.SubflowInterceptingChainLifecycleWrapper;
 import org.mule.tck.probe.PollingProber;
 import org.mule.tck.probe.Prober;
