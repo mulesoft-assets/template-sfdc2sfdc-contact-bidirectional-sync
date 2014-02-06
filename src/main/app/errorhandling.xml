@@ -15,7 +15,7 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 			doc:name="Catch Exception Strategy">
 			<logger level="INFO" message="An error has ocurred realease Poll Semaphore"
 				doc:name="Logger" />
-			<expression-component doc:name="release access to the Semaphore"><![CDATA[#[app.registry['PollSemaphore'].releaseLock()]]]></expression-component>
+			<!-- <expression-component doc:name="release access to the Semaphore"><![CDATA[#[app.registry['PollSemaphore'].releaseLock()]]]></expression-component> -->
 		</catch-exception-strategy>
 	</choice-exception-strategy>
 </mule>
