@@ -13,22 +13,17 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 	version="EE-3.5.0">
 
 	<flow name="mainFlow" processingStrategy="synchronous" doc:name="mainFlow">
-		<expression-component doc:name="try to gain access to the Semaphore"><![CDATA[#[app.registry['PollSemaphore'].acquireLock()]]]></expression-component>
-
-		<logger level="INFO"
-			message="~.~.~.~.~.~.~.~.~.~.~.~.~.~.~ Start synchronization from Salesforce instance #[sourceSystem] ~.~.~.~.~.~.~.~.~.~.~.~.~.~.~"
-			doc:name="log to indicate that the synchronization has started" />
-		<set-variable variableName="contactList" value="#[new java.util.ArrayList()]"
-			doc:name="set contactList with an empty list" />
-
-		<foreach
-			doc:name="For Each contact in the source instance that has been modified since the watermark...">
+		<logger level="INFO" message="~.~.~.~.~.~.~.~.~.~.~.~.~.~.~ Start synchronization from Salesforce instance A ~.~.~.~.~.~.~.~.~.~.~.~.~.~.~" doc:name="log to indicate that the synchronization has started for A" />
+		
+		<set-variable variableName="contactList" value="#[new java.util.ArrayList()]" doc:name="set contactList with an empty list" />
+		<foreach collection="#[contactsInAInstance]" doc:name="For Each contact in A that has been modified since the watermark...">
 			<set-variable variableName="contactInSourceInstance"
 				value="#[payload]" doc:name="set contactInSourceInstance with the current contact" />
 			<set-variable variableName="upsertContact" value="true"
 				doc:name="set upsertContact with true as its default value" />
 			<flow-ref name="synchronizeFlow" doc:name="call syncrhonizeFlow" />
 		</foreach>
+		
 		<choice doc:name="Choice">
 			<when expression="#[!(contactList.isEmpty())]">
 				<set-payload value="#[contactList]"
@@ -41,10 +36,7 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 			</otherwise>
 		</choice>
 
-		<expression-component doc:name="release access to the Semaphore"><![CDATA[#[app.registry['PollSemaphore'].releaseLock()]]]></expression-component>
-
-		<exception-strategy ref="defaultChoiceExceptionStrategy"
-			doc:name="catch Exception and call defaultChoiceExceptionStrategy" />
+		<exception-strategy ref="defaultChoiceExceptionStrategy" doc:name="catch Exception and call defaultChoiceExceptionStrategy" />
 	</flow>
 
 	<sub-flow name="synchronizeFlow" doc:name="synchronizeFlow">

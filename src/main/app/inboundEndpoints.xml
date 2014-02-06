@@ -28,15 +28,12 @@ http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/m
 		<!-- Query contacts from Salesforce B -->
 		<enricher source="#[payload]" target="#[flowVars['contactsInBInstance']]" doc:name="store the contact details for the belonging contact in the target instance">
 			<processor-chain doc:name="Processor Chain">
-				<sfdc:query-single config-ref="SalesforceB" doc:name="query contact from Salesforce B instance"
-					query="SELECT Id, FirstName, LastName, Email, LastModifiedDate, LastModifiedById FROM Contact WHERE (Email LIKE '#[payload['Email']]')" />
+				<sfdc:query-all config-ref="SalesforceB" doc:name="fetch contacts from Salesforce instance B with filtering criteria"
+					query="SELECT ${sfdc.query.fields} FROM Contact WHERE LastModifiedDate &gt; #[flowVars['lastQueryDateA']] AND Email != null ${sfdc.query.filters} ORDER BY LastModifiedDate ASC LIMIT 200"></sfdc:query-all>
 			</processor-chain>
 		</enricher>
 		
-		<logger level="INFO" message="Contacts fetched from Salesforce A: #[contactsInAInstance]" />
-		<logger level="INFO" message="Contacts fetched from Salesforce B: #[contactsInBInstance]" />
-		
-		<!-- <flow-ref name="mainFlow" doc:name="call mainFlow" /> -->
+		<flow-ref name="mainFlow" doc:name="call mainFlow" />
 	</flow>
 
 </mule>
