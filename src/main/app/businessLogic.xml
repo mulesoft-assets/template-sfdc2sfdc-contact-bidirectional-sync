@@ -22,7 +22,7 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 		<exception-strategy ref="defaultChoiceExceptionStrategy" doc:name="catch Exception and call defaultChoiceExceptionStrategy" />
 	</flow>
 	
-	<flow name="synchronizeInstanceContacts">
+	<flow name="synchronizeInstanceContacts" doc:name="synchronizeInstanceContacts">
 		<logger level="INFO" message="~.~.~.~.~.~.~.~.~.~.~.~.~.~.~ Start synchronization from Salesforce instance #[sourceSystem] ~.~.~.~.~.~.~.~.~.~.~.~.~.~.~" doc:name="log to indicate that the synchronization has started" />
 		<set-variable variableName="contactList" value="#[new java.util.ArrayList()]" doc:name="set contactList with an empty list" />
 
@@ -39,6 +39,16 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 			<set-variable variableName="contactInSourceInstance" value="#[payload]" doc:name="set contactInSourceInstance with the current contact" />
 			<set-variable variableName="upsertContact" value="true" doc:name="set upsertContact with true as its default value" />
 			<flow-ref name="synchronizeFlow" doc:name="call syncrhonizeFlow" />
+			
+			<objectstore:retrieve config-ref="ObjectStore" key="#[string:lastQueryDateB]" defaultValue-ref="#[string:${watermark.B.default.expression}]" doc:name="retrieve B Watermark from ObjectStore" />
+			<choice doc:name="Choice">
+				<when expression="#[(sourceSystem == 'B') &amp;&amp; (contactInSourceInstance.get('LastModifiedDate') >= payload)]">
+			        <objectstore:store config-ref="ObjectStore" key="lastQueryDateB" value-ref="#[contactInSourceInstance.get('LastModifiedDate')]" overwrite="true" doc:name="store new Watermark for B in ObjectStore"/>
+			    </when>
+			    <otherwise>
+			        <logger message="Nothing to do here" level="DEBUG" doc:name="log that nothing should be done here"/>
+			    </otherwise>
+			</choice>
 		</foreach>
 		
 		<choice doc:name="Choice">
