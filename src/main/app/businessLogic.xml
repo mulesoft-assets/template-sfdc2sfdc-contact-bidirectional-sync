@@ -13,7 +13,7 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 	version="EE-3.5.0">
 
 	<flow name="mainFlow" processingStrategy="synchronous" doc:name="mainFlow">
-		<expression-component doc:name="try to gain access to the Semaphore"><![CDATA[#[app.registry['PollSemaphore'].acquireLock()]]]></expression-component>
+		<expression-component doc:name="lock the poll inbound endpoints not to occur at the same time"><![CDATA[#[app.registry['PollSynchronizer'].acquireLock()]]]></expression-component>
 
 		<logger level="INFO"
 			message="~.~.~.~.~.~.~.~.~.~.~.~.~.~.~ Start synchronization from Salesforce instance #[sourceSystem] ~.~.~.~.~.~.~.~.~.~.~.~.~.~.~"
@@ -41,7 +41,7 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 			</otherwise>
 		</choice>
 
-		<expression-component doc:name="release access to the Semaphore"><![CDATA[#[app.registry['PollSemaphore'].releaseLock()]]]></expression-component>
+		<expression-component doc:name="unlock the poll inbound endpoints"><![CDATA[#[app.registry['PollSynchronizer'].releaseLock()]]]></expression-component>
 
 		<exception-strategy ref="defaultChoiceExceptionStrategy"
 			doc:name="catch Exception and call defaultChoiceExceptionStrategy" />
@@ -85,7 +85,7 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 				</expression-component>
 			</when>
 			<otherwise>
-				<logger level="INFO"
+				<logger level="DEBUG"
 					message="It exists a contact in the target instance with the same email as the one in source instance"
 					doc:name="log that the does exist in target instance" />
 				<choice doc:name="Choice">

@@ -1,4 +1,4 @@
-package org.mule.kicks.semaphore;
+package org.mule.kicks.synchronizer;
 
 import java.util.concurrent.locks.Lock;
 
@@ -10,7 +10,7 @@ import org.mule.api.context.MuleContextAware;
  * 
  * @author javiercasal
  */
-public class PollSemaphore implements MuleContextAware {
+public class PollSynchronizer implements MuleContextAware {
 
 	private static final String LOCK_ID = "poll_semaphore_lock";
 	private MuleContext muleContext;
