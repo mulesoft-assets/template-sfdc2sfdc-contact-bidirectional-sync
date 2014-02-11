@@ -21,8 +21,8 @@ http://www.mulesoft.org/schema/mule/objectstore http://www.mulesoft.org/schema/m
 		objectStore-ref="_defaultInMemoryObjectStore" />
 
 	<spring:beans>
-		<spring:bean id="PollSemaphore" name="PollSemaphore"
-			class="org.mule.kicks.semaphore.PollSemaphore" scope="singleton" />
+		<spring:bean id="PollSynchronizer" name="PollSynchronizer"
+			class="org.mule.kicks.synchronizer.PollSynchronizer" scope="singleton" />
 	</spring:beans>
 
 	<sfdc:config name="SalesforceA" username="${sfdc.a.username}"
