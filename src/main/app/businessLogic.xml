@@ -88,6 +88,8 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 					<sfdc:query-all config-ref="SalesforceB" doc:name="fetch contacts from Salesforce instance B with filtering criteria"
 						query="SELECT ${sfdc.query.fields} FROM Contact WHERE LastModifiedDate &gt; #[lastQueryDateB] AND Email != null ${sfdc.query.filters} ORDER BY LastModifiedDate ASC LIMIT 200"></sfdc:query-all>
 					<set-variable variableName="sourceSystem" value="B" doc:name="set sourceSystem to B" />
+					
+					<!-- This won't work until Jira STUDIO-4541 (https://www.mulesoft.org/jira/browse/STUDIO-4541) is resolved -->
 					<batch:execute name="businessLogicBatch" doc:name="trigger businessLogicBatch"/>
 				</when>
 				<otherwise>
