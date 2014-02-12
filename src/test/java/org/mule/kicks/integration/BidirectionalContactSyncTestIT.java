@@ -54,6 +54,7 @@ public class BidirectionalContactSyncTestIT extends AbstractKickTestCase {
 
 	private List<String> contactsCreatedInA;
 	private List<String> contactsCreatedInB;
+	private BatchTestHelper batchTestHelper;
 
 	@BeforeClass
 	public static void beforeTestClass() {
@@ -69,6 +70,8 @@ public class BidirectionalContactSyncTestIT extends AbstractKickTestCase {
 	@Before
 	public void setUp() throws MuleException {
 		stopSchedulers();
+		
+		batchTestHelper = new BatchTestHelper(muleContext);
 
 		// Flow for create contacts in source system
 		createContactInAFlow = getSubFlow("createContactInAFlow");
@@ -182,11 +185,14 @@ public class BidirectionalContactSyncTestIT extends AbstractKickTestCase {
 		 */
 
 		mainFlow.process(event);
-
+		batchTestHelper.awaitJobTermination(1200000l, 1000l);
+		
+		
 		/*
 		 * Assertions
 		 */
-
+		
+		batchTestHelper.assertJobWasSuccessful();
 		workingPollProber.check(new AssertionProbe() {
 			@Override
 			public void assertSatisfied() throws Exception {
