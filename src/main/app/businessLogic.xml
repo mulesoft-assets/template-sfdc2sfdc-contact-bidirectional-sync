@@ -67,18 +67,37 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
                     <flow-ref name="upsertContactFlow" doc:name="call upsertContactInBFlow"/>
                 </batch:commit>
             </batch:step>
+            
+            <batch:step name="asdf">
+				<objectstore:retrieve config-ref="ObjectStore" key="#[string:lastQueryDateB]" defaultValue-ref="#[string:${watermark.B.default.expression}]" doc:name="retrieve B Watermark from ObjectStore" />
+				<choice doc:name="Choice">
+					<when expression="#[(sourceSystem == 'B') &amp;&amp; (contactInSourceInstance.get('LastModifiedDate') >= payload)]">
+				        <objectstore:store config-ref="ObjectStore" key="lastQueryDateB" value-ref="#[contactInSourceInstance.get('LastModifiedDate')]" overwrite="true" doc:name="store new Watermark for B in ObjectStore"/>
+				    </when>
+				    <otherwise>
+				        <logger message="Nothing to do here" level="DEBUG" doc:name="log that nothing should be done here"/>
+				    </otherwise>
+				</choice>
+            </batch:step>
         </batch:process-records>
+        <batch:on-complete>
+			<choice doc:name="Choice">
+				<when expression="#[sourceSystem == 'A']">
+					<objectstore:retrieve config-ref="ObjectStore" key="#[string:lastQueryDateB]" defaultValue-ref="#[string:${watermark.B.default.expression}]" doc:name="retrieve B Watermark from ObjectStore" />
+			        <set-variable variableName="lastQueryDateB" value="#[payload]" doc:name="set lastQueryDateB to the value retrieved from ObjectStore"/>
+					<sfdc:query-all config-ref="SalesforceB" doc:name="fetch contacts from Salesforce instance B with filtering criteria"
+						query="SELECT ${sfdc.query.fields} FROM Contact WHERE LastModifiedDate &gt; #[lastQueryDateB] AND Email != null ${sfdc.query.filters} ORDER BY LastModifiedDate ASC LIMIT 200"></sfdc:query-all>
+					<set-variable variableName="sourceSystem" value="B" doc:name="set sourceSystem to B" />
+					<batch:execute name="businessLogicBatch" doc:name="trigger businessLogicBatch"/>
+				</when>
+				<otherwise>
+					<!-- nothing should be done here... -->
+					<logger doc:name="Logger"/>
+				</otherwise>
+			</choice>
+        </batch:on-complete>
     </batch:job>
 
-	<flow name="mainFlow" processingStrategy="synchronous" doc:name="mainFlow">
-		<expression-component doc:name="lock the poll inbound endpoints not to occur at the same time"><![CDATA[#[app.registry['PollSynchronizer'].acquireLock()]]]></expression-component>
-		<logger level="INFO" message="~.~.~.~.~.~.~.~.~.~.~.~.~.~.~ Start synchronization from Salesforce instance #[sourceSystem] ~.~.~.~.~.~.~.~.~.~.~.~.~.~.~" doc:name="log to indicate that the synchronization has started" />
-		<batch:execute name="businessLogicBatch" doc:name="trigger businessLogicBatch"/>
-		<expression-component doc:name="unlock the poll inbound endpoints"><![CDATA[#[app.registry['PollSynchronizer'].releaseLock()]]]></expression-component>
-
-		<exception-strategy ref="defaultChoiceExceptionStrategy" doc:name="catch Exception and call defaultChoiceExceptionStrategy" />
-	</flow>
-	
     <flow name="upsertContactFlow" doc:name="upsertContactFlow" processingStrategy="synchronous">
 		<choice doc:name="Choice">
 			<when expression="#[sourceSystem == 'A']">
