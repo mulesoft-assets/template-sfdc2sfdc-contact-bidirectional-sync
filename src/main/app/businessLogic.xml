@@ -68,11 +68,11 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
                 </batch:commit>
             </batch:step>
             
-            <batch:step name="asdf">
+            <batch:step name="forEachContactInSalesforceB">
 				<objectstore:retrieve config-ref="ObjectStore" key="#[string:lastQueryDateB]" defaultValue-ref="#[string:${watermark.B.default.expression}]" doc:name="retrieve B Watermark from ObjectStore" />
 				<choice doc:name="Choice">
-					<when expression="#[(sourceSystem == 'B') &amp;&amp; (contactInSourceInstance.get('LastModifiedDate') >= payload)]">
-				        <objectstore:store config-ref="ObjectStore" key="lastQueryDateB" value-ref="#[contactInSourceInstance.get('LastModifiedDate')]" overwrite="true" doc:name="store new Watermark for B in ObjectStore"/>
+					<when expression="#[(sourceSystem == 'B') &amp;&amp; (recordVars['contactInSourceInstance'].get('LastModifiedDate') &gt;= payload)]">
+				        <objectstore:store config-ref="ObjectStore" key="lastQueryDateB" value-ref="#[recordVars['contactInSourceInstance'].get('LastModifiedDate')]" overwrite="true" doc:name="store new Watermark for B in ObjectStore"/>
 				    </when>
 				    <otherwise>
 				        <logger message="Nothing to do here" level="DEBUG" doc:name="log that nothing should be done here"/>
@@ -87,14 +87,16 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 			        <set-variable variableName="lastQueryDateB" value="#[payload]" doc:name="set lastQueryDateB to the value retrieved from ObjectStore"/>
 					<sfdc:query-all config-ref="SalesforceB" doc:name="fetch contacts from Salesforce instance B with filtering criteria"
 						query="SELECT ${sfdc.query.fields} FROM Contact WHERE LastModifiedDate &gt; #[lastQueryDateB] AND Email != null ${sfdc.query.filters} ORDER BY LastModifiedDate ASC LIMIT 200"></sfdc:query-all>
-					<set-variable variableName="sourceSystem" value="B" doc:name="set sourceSystem to B" />
+                    <custom-transformer class="org.mule.kicks.workaround.BatchAutoreferenceWorkaround" doc:name="create a new Mule event"/>
+                    <set-variable variableName="sourceSystem" value="B" doc:name="set sourceSystem to B" />
+                    <set-payload value="#[payload.getMessage().getPayload()]" doc:name="set payload with the contacts fetched from Salesforce B"/>
 					
 					<!-- This won't work until Jira EE-3825 (https://www.mulesoft.org/jira/browse/EE-3825) is resolved -->
 					<batch:execute name="businessLogicBatch" doc:name="trigger businessLogicBatch"/>
 				</when>
 				<otherwise>
 					<!-- nothing should be done here... -->
-					<logger doc:name="Logger"/>
+					<logger doc:name="dummy logger" level="INFO"/>
 				</otherwise>
 			</choice>
         </batch:on-complete>
