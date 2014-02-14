@@ -41,13 +41,13 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 						</otherwise>
 					</choice>
                 </enricher>
-                <logger message="Contact in source instance details: #[recordVars['contactInSourceInstance']]" level="INFO" doc:name="log contact details in source instance"/>
+                <logger message="Contact in source instance details: #[recordVars['contactInSourceInstance']]" level="DEBUG" doc:name="log contact details in source instance"/>
                 <logger message="Contact in target instance details: #[recordVars['contactInTargetInstance']]" level="DEBUG" doc:name="log contact details in target instance"/>
             </batch:step>
             <batch:step name="forEachContactThatShouldBeUpsertedInTarget" filter-expression="#[recordVars['contactInTargetInstance'] is org.mule.transport.NullPayload ? org.mule.transport.NullPayload : (recordVars['contactInTargetInstance'].get('LastModifiedDate') &gt;= recordVars['contactInSourceInstance'].get('LastModifiedDate')) || (flowVars['integrationUser'].get('Id') == recordVars['contactInSourceInstance'].get('LastModifiedById'))]">
                 <choice doc:name="Choice">
                     <when expression="#[recordVars['contactInTargetInstance'] is org.mule.transport.NullPayload]">
-                        <logger message="The Contact in source instance does not exist in target instance; so, it should be created" level="INFO" doc:name="log that the contact does not exist in target instance"/>
+                        <logger message="The Contact in source instance does not exist in target instance; so, it should be created" level="DEBUG" doc:name="log that the contact does not exist in target instance"/>
                         <expression-component doc:name="prepare contact for creation"><![CDATA[
 							recordVars['contactInSourceInstance'].remove('Id');
 							recordVars['contactInSourceInstance'].remove('LastModifiedById');
@@ -55,7 +55,7 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 						]]></expression-component>
                     </when>
                     <otherwise>
-                        <logger message="It exists a contact in the target instance with the same email as the one in source instance" level="INFO" doc:name="log that the does exist in target instance"/>
+                        <logger message="It exists a contact in the target instance with the same email as the one in source instance" level="DEBUG" doc:name="log that the does exist in target instance"/>
                         <expression-component doc:name="prepare the contact for update"><![CDATA[
 							recordVars['contactInSourceInstance'].put('Id',recordVars['contactInTargetInstance'].get('Id'));
 							recordVars['contactInSourceInstance'].remove('LastModifiedById');
@@ -96,7 +96,7 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 				</when>
 				<otherwise>
 					<!-- nothing should be done here... -->
-					<logger doc:name="dummy logger" level="INFO"/>
+					<logger doc:name="dummy logger" level="DEBUG"/>
 				</otherwise>
 			</choice>
         </batch:on-complete>

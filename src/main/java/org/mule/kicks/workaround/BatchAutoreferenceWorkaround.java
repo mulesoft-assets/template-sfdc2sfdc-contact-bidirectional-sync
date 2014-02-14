@@ -1,6 +1,5 @@
 package org.mule.kicks.workaround;
 
-import org.mule.DefaultMuleEvent;
 import org.mule.DefaultMuleMessage;
 import org.mule.MessageExchangePattern;
 import org.mule.api.MuleEvent;
