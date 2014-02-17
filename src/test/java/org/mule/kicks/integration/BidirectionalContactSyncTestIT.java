@@ -12,6 +12,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 import org.mule.DefaultMuleMessage;
 import org.mule.MessageExchangePattern;
@@ -23,6 +24,7 @@ import org.mule.api.schedule.Schedulers;
 import org.mule.construct.Flow;
 import org.mule.kicks.builders.ContactBuilder;
 import org.mule.processor.chain.SubflowInterceptingChainLifecycleWrapper;
+import org.mule.tck.junit4.rule.DynamicPort;
 import org.mule.tck.probe.PollingProber;
 import org.mule.tck.probe.Prober;
 
@@ -56,6 +58,9 @@ public class BidirectionalContactSyncTestIT extends AbstractKickTestCase {
 	private List<String> contactsCreatedInB;
 	private BatchTestHelper batchTestHelper;
 
+	@Rule
+	public DynamicPort port = new DynamicPort("http.port");
+	
 	@BeforeClass
 	public static void beforeTestClass() {
 		System.setProperty("mule.env", "test");
