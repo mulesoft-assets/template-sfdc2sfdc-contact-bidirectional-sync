@@ -28,22 +28,17 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
                 </enricher>
             </batch:step>
             <batch:step name="forEachContactThatShouldBeUpsertedInB" filter-expression="#[recordVars['contactInTargetInstance'] is org.mule.transport.NullPayload ? org.mule.transport.NullPayload : (recordVars['contactInTargetInstance'].get('LastModifiedDate') &gt;= recordVars['contactInSourceInstance'].get('LastModifiedDate')) || (flowVars['integrationUser'].get('Id') == recordVars['contactInSourceInstance'].get('LastModifiedById'))]">
-                <choice doc:name="Choice">
-                    <when expression="#[recordVars['contactInTargetInstance'] is org.mule.transport.NullPayload]">
-                        <expression-component doc:name="prepare contact for creation"><![CDATA[
-							recordVars['contactInSourceInstance'].remove('Id');
-							recordVars['contactInSourceInstance'].remove('LastModifiedById');
-							recordVars['contactInSourceInstance'].remove('LastModifiedDate')
-						]]></expression-component>
-                    </when>
-                    <otherwise>
-                        <expression-component doc:name="prepare the contact for update"><![CDATA[
-							recordVars['contactInSourceInstance'].put('Id',recordVars['contactInTargetInstance'].get('Id'));
-							recordVars['contactInSourceInstance'].remove('LastModifiedById');
-							recordVars['contactInSourceInstance'].remove('LastModifiedDate')
-						]]></expression-component>
-                    </otherwise>
-                </choice>
+				<expression-component doc:name="prepare contact for upsert"><![CDATA[
+					if(recordVars['contactInTargetInstance'] is org.mule.transport.NullPayload) {
+						recordVars['contactInSourceInstance'].remove('Id');
+						recordVars['contactInSourceInstance'].remove('LastModifiedById');
+						recordVars['contactInSourceInstance'].remove('LastModifiedDate');
+					} else {
+						recordVars['contactInSourceInstance'].put('Id',recordVars['contactInTargetInstance'].get('Id'));
+						recordVars['contactInSourceInstance'].remove('LastModifiedById');
+						recordVars['contactInSourceInstance'].remove('LastModifiedDate');
+					}]]>
+				</expression-component>
                 <batch:commit size="200" doc:name="Batch Commit">
 			        <sfdc:upsert config-ref="SalesforceB" externalIdFieldName="Id" type="Contact" doc:name="upsert Contacts in Salesforce B instance">
 			            <sfdc:objects ref="#[payload]"/>
@@ -69,22 +64,17 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
                 </enricher>
             </batch:step>
             <batch:step name="forEachContactThatShouldBeUpsertedInA" filter-expression="#[recordVars['contactInTargetInstance'] is org.mule.transport.NullPayload ? org.mule.transport.NullPayload : (recordVars['contactInTargetInstance'].get('LastModifiedDate') &gt;= recordVars['contactInSourceInstance'].get('LastModifiedDate')) || (flowVars['integrationUser'].get('Id') == recordVars['contactInSourceInstance'].get('LastModifiedById'))]">
-                <choice doc:name="Choice">
-                    <when expression="#[recordVars['contactInTargetInstance'] is org.mule.transport.NullPayload]">
-                        <expression-component doc:name="prepare contact for creation"><![CDATA[
-							recordVars['contactInSourceInstance'].remove('Id');
-							recordVars['contactInSourceInstance'].remove('LastModifiedById');
-							recordVars['contactInSourceInstance'].remove('LastModifiedDate')
-						]]></expression-component>
-                    </when>
-                    <otherwise>
-                        <expression-component doc:name="prepare the contact for update"><![CDATA[
-							recordVars['contactInSourceInstance'].put('Id',recordVars['contactInTargetInstance'].get('Id'));
-							recordVars['contactInSourceInstance'].remove('LastModifiedById');
-							recordVars['contactInSourceInstance'].remove('LastModifiedDate')
-						]]></expression-component>
-                    </otherwise>
-                </choice>
+				<expression-component doc:name="prepare contact for upsert"><![CDATA[
+					if(recordVars['contactInTargetInstance'] is org.mule.transport.NullPayload) {
+						recordVars['contactInSourceInstance'].remove('Id');
+						recordVars['contactInSourceInstance'].remove('LastModifiedById');
+						recordVars['contactInSourceInstance'].remove('LastModifiedDate');
+					} else {
+						recordVars['contactInSourceInstance'].put('Id',recordVars['contactInTargetInstance'].get('Id'));
+						recordVars['contactInSourceInstance'].remove('LastModifiedById');
+						recordVars['contactInSourceInstance'].remove('LastModifiedDate');
+					}]]>
+				</expression-component>
                 <batch:commit size="200" doc:name="Batch Commit">
 			        <sfdc:upsert config-ref="SalesforceA" externalIdFieldName="Id" type="Contact" doc:name="upsert Contacts in Salesforce A instance">
 			            <sfdc:objects ref="#[payload]"/>
