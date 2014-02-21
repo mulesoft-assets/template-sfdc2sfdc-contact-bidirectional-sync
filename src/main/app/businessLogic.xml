@@ -13,41 +13,23 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd"
 	version="EE-3.5.0">
     
-    <batch:job name="businessLogicBatch">
+    <batch:job name="fromAToBBatch">
         <batch:threading-profile poolExhaustedAction="WAIT"/>
         <batch:input>
             <enricher source="#[payload]" target="#[flowVars['integrationUser']]" doc:name="enrich message with integration user Id">
-                <choice doc:name="Choice">
-					<when expression="#[sourceSystem == 'A']">
-		                <sfdc:query-single config-ref="SalesforceB" query="SELECT Id FROM User WHERE Username = '${sfdc.b.username}'" doc:name="query integration user Id based on its Email from Salesforce B instance"/>
-					</when>
-					<otherwise>
-		                <sfdc:query-single config-ref="SalesforceA" query="SELECT Id FROM User WHERE Username = '${sfdc.a.username}'" doc:name="query integration user Id based on its Email from Salesforce A instance"/>
-					</otherwise>
-				</choice>
+	            <sfdc:query-single config-ref="SalesforceB" query="SELECT Id FROM User WHERE Username = '${sfdc.b.username}'" doc:name="query integration user Id based on its Email from Salesforce B instance" />
             </enricher>
         </batch:input>
         <batch:process-records>
-            <batch:step name="forEachContactInSourceGetContactInTargetStep">
+            <batch:step name="forEachContactInAGetContactInBStep">
                 <batch:set-record-variable variableName="contactInSourceInstance" value="#[payload]" doc:name="create contactInSourceInstance"/>
                 <enricher source="#[payload]" target="#[recordVars['contactInTargetInstance']]" doc:name="store result in record var 'contactInTargetInstance'">
-                    
-                    <choice doc:name="Choice">
-						<when expression="#[sourceSystem == 'A']">
-		                    <sfdc:query-single config-ref="SalesforceB" query="SELECT Id, FirstName, LastName, Email, LastModifiedDate FROM Contact WHERE (Email LIKE '#[payload['Email']]')" doc:name="query contact from Salesforce B instance"/>
-						</when>
-						<otherwise>
-		                    <sfdc:query-single config-ref="SalesforceA" query="SELECT Id, FirstName, LastName, Email, LastModifiedDate FROM Contact WHERE (Email LIKE '#[payload['Email']]')" doc:name="query contact from Salesforce A instance"/>
-						</otherwise>
-					</choice>
+	                <sfdc:query-single config-ref="SalesforceB" query="SELECT Id, FirstName, LastName, Email, LastModifiedDate FROM Contact WHERE (Email LIKE '#[payload['Email']]')" doc:name="query contact from Salesforce B instance"/>
                 </enricher>
-                <logger message="Contact in source instance details: #[recordVars['contactInSourceInstance']]" level="DEBUG" doc:name="log contact details in source instance"/>
-                <logger message="Contact in target instance details: #[recordVars['contactInTargetInstance']]" level="DEBUG" doc:name="log contact details in target instance"/>
             </batch:step>
-            <batch:step name="forEachContactThatShouldBeUpsertedInTarget" filter-expression="#[recordVars['contactInTargetInstance'] is org.mule.transport.NullPayload ? org.mule.transport.NullPayload : (recordVars['contactInTargetInstance'].get('LastModifiedDate') &gt;= recordVars['contactInSourceInstance'].get('LastModifiedDate')) || (flowVars['integrationUser'].get('Id') == recordVars['contactInSourceInstance'].get('LastModifiedById'))]">
+            <batch:step name="forEachContactThatShouldBeUpsertedInB" filter-expression="#[recordVars['contactInTargetInstance'] is org.mule.transport.NullPayload ? org.mule.transport.NullPayload : (recordVars['contactInTargetInstance'].get('LastModifiedDate') &gt;= recordVars['contactInSourceInstance'].get('LastModifiedDate')) || (flowVars['integrationUser'].get('Id') == recordVars['contactInSourceInstance'].get('LastModifiedById'))]">
                 <choice doc:name="Choice">
                     <when expression="#[recordVars['contactInTargetInstance'] is org.mule.transport.NullPayload]">
-                        <logger message="The Contact in source instance does not exist in target instance; so, it should be created" level="DEBUG" doc:name="log that the contact does not exist in target instance"/>
                         <expression-component doc:name="prepare contact for creation"><![CDATA[
 							recordVars['contactInSourceInstance'].remove('Id');
 							recordVars['contactInSourceInstance'].remove('LastModifiedById');
@@ -55,7 +37,6 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 						]]></expression-component>
                     </when>
                     <otherwise>
-                        <logger message="It exists a contact in the target instance with the same email as the one in source instance" level="DEBUG" doc:name="log that the does exist in target instance"/>
                         <expression-component doc:name="prepare the contact for update"><![CDATA[
 							recordVars['contactInSourceInstance'].put('Id',recordVars['contactInTargetInstance'].get('Id'));
 							recordVars['contactInSourceInstance'].remove('LastModifiedById');
@@ -64,34 +45,55 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
                     </otherwise>
                 </choice>
                 <batch:commit size="200" doc:name="Batch Commit">
-                    <flow-ref name="upsertContactFlow" doc:name="call upsertContactInBFlow"/>
+			        <sfdc:upsert config-ref="SalesforceB" externalIdFieldName="Id" type="Contact" doc:name="upsert Contacts in Salesforce B instance">
+			            <sfdc:objects ref="#[payload]"/>
+			        </sfdc:upsert>
+			        <logger message="Upsert Salesforce response: #[payload]" level="INFO" doc:name="log Salesforce response"/>
+                </batch:commit>
+            </batch:step>
+        </batch:process-records>
+    </batch:job>
+    
+    <batch:job name="fromBToABatch">
+        <batch:threading-profile poolExhaustedAction="WAIT"/>
+        <batch:input>
+            <enricher source="#[payload]" target="#[flowVars['integrationUser']]" doc:name="enrich message with integration user Id">
+	            <sfdc:query-single config-ref="SalesforceA" query="SELECT Id FROM User WHERE Username = '${sfdc.a.username}'" doc:name="query integration user Id based on its Email from Salesforce A instance"/>
+            </enricher>
+        </batch:input>
+        <batch:process-records>
+            <batch:step name="forEachContactInBGetContactInAStep">
+                <batch:set-record-variable variableName="contactInSourceInstance" value="#[payload]" doc:name="create contactInSourceInstance"/>
+                <enricher source="#[payload]" target="#[recordVars['contactInTargetInstance']]" doc:name="store result in record var 'contactInTargetInstance'">
+		            <sfdc:query-single config-ref="SalesforceA" query="SELECT Id, FirstName, LastName, Email, LastModifiedDate FROM Contact WHERE (Email LIKE '#[payload['Email']]')" doc:name="query contact from Salesforce A instance"/>
+                </enricher>
+            </batch:step>
+            <batch:step name="forEachContactThatShouldBeUpsertedInA" filter-expression="#[recordVars['contactInTargetInstance'] is org.mule.transport.NullPayload ? org.mule.transport.NullPayload : (recordVars['contactInTargetInstance'].get('LastModifiedDate') &gt;= recordVars['contactInSourceInstance'].get('LastModifiedDate')) || (flowVars['integrationUser'].get('Id') == recordVars['contactInSourceInstance'].get('LastModifiedById'))]">
+                <choice doc:name="Choice">
+                    <when expression="#[recordVars['contactInTargetInstance'] is org.mule.transport.NullPayload]">
+                        <expression-component doc:name="prepare contact for creation"><![CDATA[
+							recordVars['contactInSourceInstance'].remove('Id');
+							recordVars['contactInSourceInstance'].remove('LastModifiedById');
+							recordVars['contactInSourceInstance'].remove('LastModifiedDate')
+						]]></expression-component>
+                    </when>
+                    <otherwise>
+                        <expression-component doc:name="prepare the contact for update"><![CDATA[
+							recordVars['contactInSourceInstance'].put('Id',recordVars['contactInTargetInstance'].get('Id'));
+							recordVars['contactInSourceInstance'].remove('LastModifiedById');
+							recordVars['contactInSourceInstance'].remove('LastModifiedDate')
+						]]></expression-component>
+                    </otherwise>
+                </choice>
+                <batch:commit size="200" doc:name="Batch Commit">
+			        <sfdc:upsert config-ref="SalesforceA" externalIdFieldName="Id" type="Contact" doc:name="upsert Contacts in Salesforce A instance">
+			            <sfdc:objects ref="#[payload]"/>
+			        </sfdc:upsert>
+			        <logger message="Upsert Salesforce response: #[payload]" level="INFO" doc:name="log Salesforce response"/>
                 </batch:commit>
             </batch:step>
         </batch:process-records>
     </batch:job>
 
-	<flow name="mainFlow" processingStrategy="synchronous" doc:name="mainFlow">
-		<expression-component doc:name="lock the poll inbound endpoints not to occur at the same time"><![CDATA[#[app.registry['PollSynchronizer'].acquireLock()]]]></expression-component>
-		<batch:execute name="businessLogicBatch" doc:name="trigger businessLogicBatch"/>
-		<expression-component doc:name="unlock the poll inbound endpoints"><![CDATA[#[app.registry['PollSynchronizer'].releaseLock()]]]></expression-component>
-
-		<exception-strategy ref="defaultChoiceExceptionStrategy" doc:name="catch Exception and call defaultChoiceExceptionStrategy" />
-	</flow>
-	
-    <flow name="upsertContactFlow" doc:name="upsertContactFlow" processingStrategy="synchronous">
-		<choice doc:name="Choice">
-			<when expression="#[sourceSystem == 'A']">
-		        <sfdc:upsert config-ref="SalesforceB" externalIdFieldName="Id" type="Contact" doc:name="upsert Contacts in Salesforce B instance">
-		            <sfdc:objects ref="#[payload]"/>
-		        </sfdc:upsert>
-			</when>
-			<otherwise>
-		        <sfdc:upsert config-ref="SalesforceA" externalIdFieldName="Id" type="Contact" doc:name="upsert Contacts in Salesforce A instance">
-		            <sfdc:objects ref="#[payload]"/>
-		        </sfdc:upsert>
-			</otherwise>
-		</choice>
-        <logger message="Upsert Salesforce response: #[payload]" level="INFO" doc:name="log upsert Salesforce response"/>
-    </flow>
 
 </mule>
