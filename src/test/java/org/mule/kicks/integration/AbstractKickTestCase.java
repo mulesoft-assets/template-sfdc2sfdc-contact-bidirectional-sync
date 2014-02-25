@@ -2,11 +2,15 @@ package org.mule.kicks.integration;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.Collection;
 import java.util.Properties;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.mule.api.MuleException;
 import org.mule.api.config.MuleProperties;
+import org.mule.api.schedule.Scheduler;
+import org.mule.api.schedule.Schedulers;
 import org.mule.construct.Flow;
 import org.mule.processor.chain.SubflowInterceptingChainLifecycleWrapper;
 import org.mule.tck.junit4.FunctionalTestCase;
@@ -87,6 +91,21 @@ public class AbstractKickTestCase extends FunctionalTestCase {
 	protected static SubflowInterceptingChainLifecycleWrapper getSubFlow(String flowName) {
 		return (SubflowInterceptingChainLifecycleWrapper) muleContext.getRegistry()
 																		.lookupObject(flowName);
+	}
+	
+	protected void stopFlowSchedulers(String flowName) throws MuleException {
+		final Collection<Scheduler> schedulers = muleContext.getRegistry().lookupScheduler(Schedulers.flowPollingSchedulers(flowName));
+		for (final Scheduler scheduler : schedulers) {
+			scheduler.stop();
+		}
+	}
+	
+	protected void runSchedulersOnce(String flowName) throws Exception {
+		final Collection<Scheduler> schedulers = muleContext.getRegistry().lookupScheduler(Schedulers.flowPollingSchedulers(flowName));
+
+		for (final Scheduler scheduler : schedulers) {
+			scheduler.schedule();
+		}
 	}
 
 }
