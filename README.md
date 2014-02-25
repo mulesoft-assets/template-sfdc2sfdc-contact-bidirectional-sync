@@ -1,4 +1,3 @@
-
 # Mule Kick: sfdc2sfdc-bidirectional-contact-sync
 
 + [Use Case](#usecase)
@@ -36,11 +35,14 @@ In order to have your application up and running you just need to complete two s
 
 In order to use this Mule Kick you need to configure a couple of properties (credentials, configurations, etc.) either in properties file, or in CloudHub as Environment Variables. 
 
-### Detailed list of needed properties, with examples):
+### Detailed list of needed properties, (with examples):
 
 #### Application configuration
 + polling.frequency `10000`  
-+ watermark.default.expression `YESTERDAY`
+This are the miliseconds that will run between two different checks for updates in Salesforce
+
++ watermark.default.expression `2014-02-25T11:00:00.000Z`  
+This property is an important one, as it configures what should be the start point of the synchronization. If the use case includes synchronizing every contact created from the begining of the times, you should use a date previous to any contact creation (perhaphs `1900-01-01T08:00:00.000Z` is a good choice). If you want to synchronize the contacts created from now on, then you should use a default value according to that requirement (for example, today is Febraury 25th of 2014 and it's eleven o'clock, then I would take the following value `2014-02-25T11:00:00.000Z`).
 
 #### SalesForce Connector configuration for company A
 + sfdc.a.username `bob.dylan@orga`
