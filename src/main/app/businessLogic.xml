@@ -16,6 +16,11 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
     <batch:job name="fromAToBBatch">
         <batch:threading-profile poolExhaustedAction="WAIT"/>
         <batch:input>
+			<poll doc:name="Poll">
+				<fixed-frequency-scheduler frequency="${polling.frequency}" startDelay="10000" />
+				<watermark variable="lastQueryDateA" default-expression="${watermark.default.expression}" selector="MAX" selector-expression="#[payload.LastModifiedDate]" />
+				<sfdc:query-all config-ref="SalesforceA" doc:name="fetch contacts from A with filtering criteria" query="SELECT ${sfdc.query.fields} FROM Contact WHERE LastModifiedDate &gt; #[flowVars['lastQueryDateA']] AND Email != null ${sfdc.query.filters} ORDER BY LastModifiedDate ASC LIMIT 200"></sfdc:query-all>
+			</poll>
             <enricher source="#[payload]" target="#[flowVars['integrationUser']]" doc:name="store integration user id">
 	            <sfdc:query-single config-ref="SalesforceB" query="SELECT Id FROM User WHERE Username = '${sfdc.b.username}'" doc:name="query integration user id from B" />
             </enricher>
@@ -52,6 +57,12 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
     <batch:job name="fromBToABatch">
         <batch:threading-profile poolExhaustedAction="WAIT"/>
         <batch:input>
+			<poll doc:name="Poll">
+				<fixed-frequency-scheduler frequency="${polling.frequency}" startDelay="10000" />
+				<watermark variable="lastQueryDateB" default-expression="${watermark.default.expression}" selector="MAX" selector-expression="#[payload.LastModifiedDate]" />
+				<sfdc:query-all config-ref="SalesforceB" doc:name="fetch contacts from B with filtering criteria"
+					query="SELECT ${sfdc.query.fields} FROM Contact WHERE LastModifiedDate &gt; #[flowVars['lastQueryDateB']] AND Email != null ${sfdc.query.filters} ORDER BY LastModifiedDate ASC LIMIT 200"></sfdc:query-all>
+			</poll>
             <enricher source="#[payload]" target="#[flowVars['integrationUser']]" doc:name="store integration user id">
 	            <sfdc:query-single config-ref="SalesforceA" query="SELECT Id FROM User WHERE Username = '${sfdc.a.username}'" doc:name="query integration user id from A"/>
             </enricher>
