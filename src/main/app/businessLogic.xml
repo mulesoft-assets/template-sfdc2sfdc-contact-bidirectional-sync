@@ -37,8 +37,8 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 						recordVars['contactInSourceInstance'].put('Id',recordVars['contactInTargetInstance'].get('Id'));
 						recordVars['contactInSourceInstance'].remove('LastModifiedById');
 						recordVars['contactInSourceInstance'].remove('LastModifiedDate');
-					}]]>
-				</expression-component>
+					}
+				]]></expression-component>
                 <batch:commit size="200" doc:name="Batch Commit">
 			        <sfdc:upsert config-ref="SalesforceB" externalIdFieldName="Id" type="Contact" doc:name="upsert contacts in B">
 			            <sfdc:objects ref="#[payload]"/>
@@ -73,8 +73,8 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 						recordVars['contactInSourceInstance'].put('Id',recordVars['contactInTargetInstance'].get('Id'));
 						recordVars['contactInSourceInstance'].remove('LastModifiedById');
 						recordVars['contactInSourceInstance'].remove('LastModifiedDate');
-					}]]>
-				</expression-component>
+					}
+				]]></expression-component>
                 <batch:commit size="200" doc:name="Batch Commit">
 			        <sfdc:upsert config-ref="SalesforceA" externalIdFieldName="Id" type="Contact" doc:name="upsert contact in A">
 			            <sfdc:objects ref="#[payload]"/>
