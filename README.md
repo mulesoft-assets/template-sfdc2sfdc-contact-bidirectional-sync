@@ -1,4 +1,4 @@
-# Mule Kick: sfdc2sfdc-bidirectional-contact-sync
+# Anypoint Template: sfdc2sfdc-bidirectional-contact-sync
 
 + [Use Case](#usecase)
 + [Run it!](#runit)
@@ -16,9 +16,9 @@
 
 As a Salesforce admin I want to have my Contacts syncronized between two different Salesforce orgs.
 
-This Kick/Template should serve as a foundation for setting an online bi-directional sync of Contacts between two SalesForce instances, being able to specify filtering criterias. 
+This Template should serve as a foundation for setting an online bi-directional sync of Contacts between two SalesForce instances, being able to specify filtering criterias. 
 
-The integration main behaviour is polling for changes (new Contacts or modified ones) that have occured in any of the Salesforces instances during a certain defined period of time. For those Contacts that both have not been updated yet, and meet the requirements configured in the query, the integration triggers an upsert (update or create depending the case) taking the last modification as the one that should be applied.
+The integration main behaviour is polling for changes (new Contacts or modified ones) that have occured in any of the Salesforces instances during a certain defined period of time. For those Contacts that both have not been updated yet the integration triggers an upsert (update or create depending the case) taking the last modification as the one that should be applied.
 
 Requirements have been set not only to be used as examples, but also to stablish starting point to adapt the integration to any given requirements.
 
@@ -33,7 +33,7 @@ In order to have your application up and running you just need to complete two s
 
 ## Properties to be configured<a name="propertiestobeconfigured"/>
 
-In order to use this Mule Kick you need to configure a couple of properties (credentials, configurations, etc.) either in properties file, or in CloudHub as Environment Variables. 
+In order to use this Anypoint Template you need to configure a couple of properties (credentials, configurations, etc.) either in properties file, or in CloudHub as Environment Variables. 
 
 ### Detailed list of needed properties, (with examples):
 
@@ -56,9 +56,6 @@ This property is an important one, as it configures what should be the start poi
 + sfdc.b.securityToken `ces56arl7apQs56XTddf34X`
 + sfdc.b.url `https://login.salesforce.com/services/Soap/u/26.0`
 
-#### Salesforce polling query parameters
-+ sfdc.query.fields `Department, Description, Email, FirstName, HomePhone, LastModifiedDate, LastName, MailingCountry, MobilePhone, Title`
-+ sfdc.query.filters `AND MailingCountry IN ('U.S.','United States','US')`
 
 ### Some points to consider about configuration properties
 
@@ -78,11 +75,11 @@ Once your app is all set and started, supposing you choose as domain name `sfdc2
 ## Running on premise <a name="runonopremise"/>
 Complete all properties in one of the property files, for example in [mule.prod.properties] (../blob/master/src/main/resources/mule.prod.properties) and run your app with the corresponding environment variable to use it. To follow the example, this will be `mule.env=prod`.
 
-After this, to trigger the use case you just need to hit the local http endpoint with the port you configured in your file. If this is, for instance, `9090` then you should hit: `http://localhost:9090/synccontacts` and this will create a CSV report and send it to the mails set.
+After this,  the integration will fetch the updates occured since the date configured in the watermark.default.expression property.
 
 # Customize It!<a name="customizeit"/>
-This brief guide intends to give a high level idea of how this Kick is built and how you can change it according to your needs.
-As mule applications are based on XML files, this page will be organised by describing all the XML that conform the Kick.
+This brief guide intends to give a high level idea of how this Template is built and how you can change it according to your needs.
+As mule applications are based on XML files, this page will be organised by describing all the XML that conform the Template.
 Of course more files will be found such as Test Classes and [Mule Application Files](http://www.mulesoft.org/documentation/display/current/Application+Format), but to keep it simple we will focus on the XMLs.
 
 Here is a list of the main XML files you'll find in this application:
@@ -107,7 +104,7 @@ It is intented to define the application API.
 ...
 
 ## businessLogic.xml<a name="businesslogicxml"/>
-This file holds the functional aspect of the kick , directed by one flow responsible of conducting the business logic.
+This file holds the functional aspect of the template , directed by one flow responsible of conducting the business logic.
 ...
 
 
