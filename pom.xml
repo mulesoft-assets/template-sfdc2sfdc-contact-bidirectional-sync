@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.mule.templates</groupId>
@@ -13,12 +14,14 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
 		<mule.version>3.5.0-M4</mule.version>
+		<munit.version>3.4-M4</munit.version>
+
+		<sfdc.version>5.4.3</sfdc.version>
+
+		<junit.version>4.9</junit.version>
 		<eclipsePluginVersion>2.8</eclipsePluginVersion>
 		<jdkName>JavaSE-1.6</jdkName>
 		<jdk.version>1.6</jdk.version>
-		<junit.version>4.9</junit.version>
-		<munit.version>3.4-M4</munit.version>
-		<sfdc.version>5.4.3</sfdc.version>
 	</properties>
 
 	<build>
@@ -53,7 +56,7 @@
 										</goals>
 									</pluginExecutionFilter>
 									<action>
-										<ignore/>
+										<ignore />
 									</action>
 								</pluginExecution>
 							</pluginExecutions>
@@ -76,6 +79,7 @@
 					</execution>
 				</executions>
 				<configuration>
+					<useFile>false</useFile>
 					<additionalClasspathElements>
 						<additionalClasspathElement>${MULE_HOME}/conf/</additionalClasspathElement>
 						<!-- Location of the mule licence in Bamboo muleLicenseKey.lic -->
@@ -107,11 +111,11 @@
 							<groupId>org.mule.modules</groupId>
 							<artifactId>mule-module-sfdc</artifactId>
 						</inclusion>
-					<inclusion>
-                            <groupId>org.mule.modules</groupId>
-                            <artifactId>mule-module-objectstore</artifactId>
-                        </inclusion>
-                    </inclusions>
+						<inclusion>
+							<groupId>org.mule.modules</groupId>
+							<artifactId>mule-module-objectstore</artifactId>
+						</inclusion>
+					</inclusions>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -224,7 +228,8 @@
 						<configuration>
 							<tasks>
 								<!-- Using an ant task to deflate cloveretl-engine.zip -->
-								<unzip dest="${project.build.testOutputDirectory}" src="${project.build.testOutputDirectory}/cloveretl-engine.zip"/>
+								<unzip dest="${project.build.testOutputDirectory}"
+									src="${project.build.testOutputDirectory}/cloveretl-engine.zip" />
 							</tasks>
 						</configuration>
 						<goals>
@@ -337,7 +342,7 @@
 			<version>${mule.version}</version>
 			<scope>provided</scope>
 		</dependency>
-		
+
 		<!-- Xml configuration -->
 		<dependency>
 			<groupId>org.mule.modules</groupId>
@@ -432,12 +437,22 @@
 			<version>${mule.version}</version>
 			<scope>provided</scope>
 		</dependency>
-
+		<dependency>
+			<groupId>org.mule.modules</groupId>
+			<artifactId>mule-module-devkit-support</artifactId>
+			<version>${mule.version}</version>
+		</dependency>
 		<!-- Connectors -->
 		<dependency>
 			<groupId>org.mule.modules</groupId>
 			<artifactId>mule-module-sfdc</artifactId>
 			<version>${sfdc.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.mule.modules</groupId>
+			<artifactId>mule-module-objectstore</artifactId>
+			<version>1.3.0</version>
 		</dependency>
 
 		<!-- for testing -->
@@ -476,52 +491,49 @@
 			<artifactId>mule-module-batch-ee</artifactId>
 			<version>${mule.version}</version>
 			<scope>test</scope>
-	        <type>test-jar</type>
+			<type>test-jar</type>
 		</dependency>
-		
+
 		<!-- Munit -->
 		<dependency>
-	        <groupId>org.mule.munit</groupId>
-	        <artifactId>munit-runner</artifactId>
-	        <version>${munit.version}</version>
-	        <scope>test</scope>
+			<groupId>org.mule.munit</groupId>
+			<artifactId>munit-runner</artifactId>
+			<version>${munit.version}</version>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
-	        <groupId>org.mule.munit</groupId>
-	        <artifactId>munit-common</artifactId>
-	        <version>${munit.version}</version>
-	        <scope>test</scope>
+			<groupId>org.mule.munit</groupId>
+			<artifactId>munit-common</artifactId>
+			<version>${munit.version}</version>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
-	        <groupId>org.mule.munit</groupId>
-	        <artifactId>munit-assert</artifactId>
-	        <version>${munit.version}</version>
-	        <scope>test</scope>
+			<groupId>org.mule.munit</groupId>
+			<artifactId>munit-assert</artifactId>
+			<version>${munit.version}</version>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
-	        <groupId>org.mule.munit</groupId>
-	        <artifactId>munit-mock</artifactId>
-	        <version>${munit.version}</version>
-	        <scope>test</scope>
+			<groupId>org.mule.munit</groupId>
+			<artifactId>munit-mock</artifactId>
+			<version>${munit.version}</version>
+			<scope>test</scope>
 		</dependency>
-		<dependency>
-	        <groupId>org.mule.modules</groupId>
-	        <artifactId>mule-interceptor-module</artifactId>
-	        <version>${munit.version}</version>
-	        <scope>test</scope>
-		</dependency>
-		
 		<dependency>
 			<groupId>org.mule.modules</groupId>
-			<artifactId>mule-module-devkit-support</artifactId>
-			<version>${mule.version}</version>
+			<artifactId>mule-interceptor-module</artifactId>
+			<version>${munit.version}</version>
+			<scope>test</scope>
 		</dependency>
+
+
 		<dependency>
-            <groupId>org.mule.modules</groupId>
-            <artifactId>mule-module-objectstore</artifactId>
-            <version>1.3.0</version>
-        </dependency>
-    </dependencies>
+			<groupId>xalan</groupId>
+			<artifactId>xalan</artifactId>
+			<version>2.7.1</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
 
 	<repositories>
 		<repository>
