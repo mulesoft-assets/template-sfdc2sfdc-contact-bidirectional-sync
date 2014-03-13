@@ -1,4 +1,4 @@
-package org.mule.kicks.test.utils;
+package org.mule.templates.test.util;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -11,11 +11,11 @@ import org.mule.construct.Flow;
 import org.mule.tck.junit4.FunctionalTestCase;
 
 /**
- * This is the base test class for Kicks integration tests.
+ * This is the base test class for Templates integration tests.
  * 
  * @author damiansima
  */
-public class AbstractKickTestCase extends FunctionalTestCase {
+public class AbstractTemplatesTestCase extends FunctionalTestCase {
 	
 	private static final String MAPPINGS_FOLDER_PATH = "./mappings";
 	private static final String TEST_FLOWS_FOLDER_PATH = "./src/test/resources/flows/";

@@ -1,6 +1,6 @@
-package org.mule.kicks.integration;
+package org.mule.templates.integration;
 
-import static org.mule.kicks.builders.SfdcObjectBuilder.aContact;
+import static org.mule.templates.builders.SfdcObjectBuilder.aContact;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,10 +18,10 @@ import org.junit.Test;
 import org.mule.MessageExchangePattern;
 import org.mule.api.MuleException;
 import org.mule.api.lifecycle.InitialisationException;
-import org.mule.kicks.builders.SfdcObjectBuilder;
-import org.mule.kicks.test.utils.AbstractKickTestCase;
 import org.mule.processor.chain.InterceptingChainLifecycleWrapper;
 import org.mule.processor.chain.SubflowInterceptingChainLifecycleWrapper;
+import org.mule.templates.builders.SfdcObjectBuilder;
+import org.mule.templates.test.util.AbstractTemplatesTestCase;
 
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
@@ -33,7 +33,7 @@ import com.sforce.soap.partner.SaveResult;
  * 
  */
 @SuppressWarnings("unchecked")
-public class BidirectionalContactSyncTestIT extends AbstractKickTestCase {
+public class BidirectionalContactSyncTestIT extends AbstractTemplatesTestCase {
 
 	private static final String POLL_A_BATCH_JOB_NAME = "fromAToBBatch";
 	private static final String POLL_B_BATCH_JOB_NAME = "fromBToABatch";

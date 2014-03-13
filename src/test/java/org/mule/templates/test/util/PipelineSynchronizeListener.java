@@ -1,4 +1,4 @@
-package org.mule.kicks.test.utils;
+package org.mule.templates.test.util;
 
 import org.apache.commons.lang.Validate;
 import org.mule.api.MuleEvent;
