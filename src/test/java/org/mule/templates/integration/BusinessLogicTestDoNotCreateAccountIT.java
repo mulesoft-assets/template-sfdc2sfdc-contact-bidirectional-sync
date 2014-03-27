@@ -11,6 +11,7 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -34,7 +35,7 @@ import com.sforce.soap.partner.SaveResult;
  * 
  */
 @SuppressWarnings("unchecked")
-public class BidirectionalContactSyncTestIT extends AbstractTemplatesTestCase {
+public class BusinessLogicTestDoNotCreateAccountIT extends AbstractTemplatesTestCase {
 
 	private static final String POLL_A_BATCH_JOB_NAME = "fromAToBBatch";
 	private static final String POLL_B_BATCH_JOB_NAME = "fromBToABatch";
@@ -64,6 +65,17 @@ public class BidirectionalContactSyncTestIT extends AbstractTemplatesTestCase {
 				.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 		System.setProperty("watermark.default.expression",
 				now.toString(dateFormat));
+
+		System.setProperty("account.sync.policy", "");
+		System.setProperty("account.id.in.b", "");
+	}
+
+	@AfterClass
+	public static void shutDown() {
+		System.clearProperty("polling.frequency");
+		System.clearProperty("watermark.default.expression");
+		System.clearProperty("account.sync.policy");
+		System.clearProperty("account.id.in.b");
 	}
 
 	@Before
