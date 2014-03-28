@@ -16,51 +16,53 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
     <batch:job name="syncBatch">
         <batch:threading-profile poolExhaustedAction="WAIT"/>
         <batch:process-records>
-            <batch:step name="forEachContactInAGetContactInBStep">
-                <batch:set-record-variable variableName="contactInSourceInstance" value="#[payload]" doc:name="store contact in source instance"/>
-                <logger message="Hello Step 1 A! Contact name: #[recordVars['contactInSourceInstance']['FirstName']] #[recordVars['contactInSourceInstance']['LastName']]" level="INFO" doc:name="debug Logger"/>
+            <batch:step name="forEachContactInAGetContactInBStep" filter-expression="#['B'.equals(flowVars['sourceSystem'])]">
+                <logger message="Hello Step 1 A! Contact name: #[payload['FirstName']] #[payload['LastName']]" level="INFO" doc:name="debug Logger"/>
                 <enricher source="#[payload]" target="#[recordVars['contactInTargetInstance']]" doc:name="store contact in target instance">
 	                <sfdc:query-single config-ref="SalesforceB" query="SELECT Id, FirstName, LastName, Email, LastModifiedDate FROM Contact WHERE (Email LIKE '#[payload['Email']]')" doc:name="query contact from B instance"/>
                 </enricher>
             </batch:step>
-            <batch:step name="findOrCreateAccountInBSetp" filter-expression="! ('syncAccount'=='${account.sync.policy}')">
-                <logger message="Hello Step 2 A! Contact name: #[recordVars['contactInSourceInstance']['FirstName']] #[recordVars['contactInSourceInstance']['LastName']]" level="INFO" doc:name="debug Logger"/>
-                <enricher source="#[payload]" target="#[recordVars['accountInB']]" doc:name="store account in B">
-                    <sfdc:query-single config-ref="SalesforceB" query="SELECT Id, Name FROM Account WHERE Name = '#[recordVars['contactInSourceInstance']['Account']['Name']]'" doc:name="query Account in Salesforce Instance B"/>
+            <batch:step name="findOrCreateAccountInBSetp" filter-expression="#['B'.equals(flowVars['sourceSystem']) || (!('syncAccount'=='${account.sync.policy}'))]">
+                <logger message="Hello Step 2 A! Contact name: #[payload['FirstName']] #[payload['LastName']]" level="INFO" doc:name="debug Logger"/>
+                <enricher source="#[payload]" target="#[recordVars['accountInTargetInstance']]" doc:name="store account in target instance">
+                    <sfdc:query-single config-ref="SalesforceB" query="SELECT Id, Name FROM Account WHERE Name = '#[payload['Account']['Name']]'" doc:name="query account in B instance"/>
                 </enricher>
                 <choice doc:name="Choice">
-                    <when expression="#[recordVars['accountInB'] is NullPayload]">
-	                    <expression-component doc:name="remove unnecessary fields"><![CDATA[recordVars['contactInSourceInstance']['Account'].remove('Id');
-recordVars['contactInSourceInstance']['Account'].put('NumberOfEmployees', Integer.parseInt(recordVars['contactInSourceInstance']['Account']['NumberOfEmployees']));
-
-message.payload = new java.util.ArrayList();
-message.payload.add(recordVars['contactInSourceInstance']['Account']);]]></expression-component>
-	                    <sfdc:create config-ref="SalesforceB" type="Account" doc:name="create Account in Salesforce Instance B">
-	                        <sfdc:objects ref="#[payload]"/>
-	                    </sfdc:create>
-                        <set-payload value="#[payload[0].getId()]" doc:name="set payload with the new account's id"/>
+                    <when expression="#[recordVars['accountInTargetInstance'] is NullPayload]">
+                        <enricher doc:name="store id of account in target instance" target="#[recordVars['idOfAccountInTargetInstance']]" source="#[payload]">
+	                        <processor-chain doc:name="Processor Chain">
+                                <expression-component doc:name="prepare account for creation"><![CDATA[payload['Account'].remove('Id');
+payload['Account'].put('NumberOfEmployees', payload['Account']['NumberOfEmployees'] == null ? 0 :  Integer.parseInt(payload['Account']['NumberOfEmployees']));]]></expression-component>
+                                <set-payload value="#[ [payload['Account']]]" doc:name="set payload with account to be created"/>
+       		                     <sfdc:create config-ref="SalesforceB" type="Account" doc:name="create account in B instance">
+       	    	                     <sfdc:objects ref="#[payload]"/>
+       	        	             </sfdc:create>
+                                <expression-transformer expression="#[payload[0].getId()]" doc:name="get the id of the account created"/>
+	                        </processor-chain>
+                        </enricher>
                     </when>
                     <otherwise>
-                        <set-payload value="#[recordVars['accountInB']['Id']]" doc:name="set payload with the existing account's id"/>
+                        <enricher target="#[recordVars['idOfAccountInTargetInstance']]" doc:name="store id of account in B" source="#[payload]">
+     	                   <expression-transformer expression="#[recordVars['accountInTargetInstance']['Id']]" doc:name="get the id of the account in target"/>
+                        </enricher>
                     </otherwise>
                 </choice>
-                <expression-component doc:name="set contact's parente account id in B"><![CDATA[recordVars['contactInSourceInstance'].put('AccountId', payload);]]></expression-component>
+                <expression-component doc:name="set contact's parent account id"><![CDATA[payload.put('AccountId', recordVars['idOfAccountInTargetInstance']);]]></expression-component>
             </batch:step>
-            <batch:step name="setDummyAccountIdForBStep" filter-expression="! ('assignDummyAccount'=='${account.sync.policy}')">
-                <logger message="Hello Step 3 A! Contact name: #[recordVars['contactInSourceInstance']['FirstName']] #[recordVars['contactInSourceInstance']['LastName']]" level="INFO" doc:name="debug Logger"/>
-                <expression-component doc:name="set contact's parent account id in B"><![CDATA[recordVars['contactInSourceInstance'].put('AccountId', '${account.id.in.b}');]]></expression-component>
+            <batch:step name="setDummyAccountIdForBStep" filter-expression="#['B'.equals(flowVars['sourceSystem']) || (! ('assignDummyAccount'=='${account.sync.policy}'))]">
+                <logger message="Hello Step 3 A! Contact name: #[payload['FirstName']] #[payload['LastName']]" level="INFO" doc:name="debug Logger"/>
+                <expression-component doc:name="set contact's parent account id"><![CDATA[payload.put('AccountId', '${account.id.in.b}');]]></expression-component>
             </batch:step>
-            <batch:step name="forEachContactThatShouldBeUpsertedInB" filter-expression="#[recordVars['contactInTargetInstance'] is NullPayload ? false : (recordVars['contactInTargetInstance'].get('LastModifiedDate') &gt;= recordVars['contactInSourceInstance'].get('LastModifiedDate')) || ('${sfdc.a.integration.user.id}' == recordVars['contactInSourceInstance'].get('LastModifiedById'))]">
-				<expression-component doc:name="prepare contact for upsert"><![CDATA[recordVars['contactInSourceInstance'].remove('LastModifiedDate');
-recordVars['contactInSourceInstance'].remove('LastModifiedById');
-recordVars['contactInSourceInstance'].remove('Account');
+            <batch:step name="forEachContactThatShouldBeUpsertedInB" filter-expression="#['B'.equals(flowVars['sourceSystem']) || (recordVars['contactInTargetInstance'] is NullPayload ? false : (recordVars['contactInTargetInstance'].get('LastModifiedDate') &gt;= recordVars['contactInSourceInstance'].get('LastModifiedDate')) || ('${sfdc.a.integration.user.id}' == recordVars['contactInSourceInstance'].get('LastModifiedById')))]">
+				<expression-component doc:name="prepare contact for upsert"><![CDATA[payload.remove('LastModifiedDate');
+payload.remove('LastModifiedById');
+payload.remove('Account');
 
 if(recordVars['contactInTargetInstance'] is org.mule.transport.NullPayload) {
-	recordVars['contactInSourceInstance'].remove('Id');
+	payload.remove('Id');
 } else {
-	recordVars['contactInSourceInstance'].put('Id',recordVars['contactInTargetInstance'].get('Id'));						
-}
-message.payload = recordVars['contactInSourceInstance'];]]></expression-component>
+	payload.put('Id', recordVars['contactInTargetInstance'].get('Id'));	
+}]]></expression-component>
                 <batch:commit size="200" doc:name="Batch Commit">
 			        <sfdc:upsert config-ref="SalesforceB" externalIdFieldName="Id" type="Contact" doc:name="upsert contacts in B">
 			            <sfdc:objects ref="#[payload]"/>
