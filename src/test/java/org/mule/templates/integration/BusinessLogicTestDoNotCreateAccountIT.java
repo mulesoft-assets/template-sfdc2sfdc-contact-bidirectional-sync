@@ -37,8 +37,8 @@ import com.sforce.soap.partner.SaveResult;
 @SuppressWarnings("unchecked")
 public class BusinessLogicTestDoNotCreateAccountIT extends AbstractTemplatesTestCase {
 
-	private static final String POLL_A_BATCH_JOB_NAME = "fromAToBBatch";
-	private static final String POLL_B_BATCH_JOB_NAME = "fromBToABatch";
+	private static final String A_INBOUND_FLOW_NAME = "triggerSyncFromAFlow";
+	private static final String B_INBOUND_FLOW_NAME = "triggerSyncFromBFlow";
 	private static final String ANYPOINT_TEMPLATE_NAME = "sfdc2sfdc-bidirectional-contact-sync";
 	private static final int TIMEOUT_MILLIS = 60;
 
@@ -55,6 +55,8 @@ public class BusinessLogicTestDoNotCreateAccountIT extends AbstractTemplatesTest
 
 	@BeforeClass
 	public static void beforeTestClass() {
+		System.setProperty("page.size", "1000");
+
 		// Set polling frequency to 10 seconds
 		System.setProperty("polling.frequency", "10000");
 
@@ -67,7 +69,14 @@ public class BusinessLogicTestDoNotCreateAccountIT extends AbstractTemplatesTest
 				now.toString(dateFormat));
 
 		System.setProperty("account.sync.policy", "");
-		System.setProperty("account.id.in.b", "");
+	}
+	
+	@Before
+	public void setUp() throws MuleException {
+		stopAutomaticPollTriggering();
+		getAndInitializeFlows();
+		
+		batchTestHelper = new BatchTestHelper(muleContext);
 	}
 
 	@AfterClass
@@ -75,13 +84,6 @@ public class BusinessLogicTestDoNotCreateAccountIT extends AbstractTemplatesTest
 		System.clearProperty("polling.frequency");
 		System.clearProperty("watermark.default.expression");
 		System.clearProperty("account.sync.policy");
-		System.clearProperty("account.id.in.b");
-	}
-
-	@Before
-	public void setUp() throws MuleException {
-		stopAutomaticPollTriggering();
-		getAndInitializeFlows();
 	}
 
 	@After
@@ -90,8 +92,8 @@ public class BusinessLogicTestDoNotCreateAccountIT extends AbstractTemplatesTest
 	}
 
 	private void stopAutomaticPollTriggering() throws MuleException {
-		stopFlowSchedulers(POLL_A_BATCH_JOB_NAME);
-		stopFlowSchedulers(POLL_B_BATCH_JOB_NAME);
+		stopFlowSchedulers(A_INBOUND_FLOW_NAME);
+		stopFlowSchedulers(B_INBOUND_FLOW_NAME);
 	}
 
 	private void getAndInitializeFlows() throws InitialisationException {
@@ -162,8 +164,7 @@ public class BusinessLogicTestDoNotCreateAccountIT extends AbstractTemplatesTest
 				updatedContact.build(), createContactInBFlow));
 
 		// Execution
-		executeWaitAndAssertBatchJob(POLL_A_BATCH_JOB_NAME);
-		executeWaitAndAssertBatchJob(POLL_B_BATCH_JOB_NAME);
+		executeWaitAndAssertBatchJob(B_INBOUND_FLOW_NAME);
 
 		// Assertions
 		Map<String, String> retrievedContactFromA = (Map<String, String>) queryContact(
@@ -205,13 +206,14 @@ public class BusinessLogicTestDoNotCreateAccountIT extends AbstractTemplatesTest
 
 	private void executeWaitAndAssertBatchJob(String flowConstructName)
 			throws Exception {
+
 		// Execute synchronization
 		runSchedulersOnce(flowConstructName);
 
-		// Wait for the batch job executed to finish
-		batchTestHelper = new BatchTestHelper(muleContext);
-		batchTestHelper.awaitJobTermination(TIMEOUT_MILLIS * 10000, 500);
+		// Wait for the batch job execution to finish
+		batchTestHelper.awaitJobTermination(TIMEOUT_MILLIS * 1000, 500);
 		batchTestHelper.assertJobWasSuccessful();
 	}
+	
 
 }
