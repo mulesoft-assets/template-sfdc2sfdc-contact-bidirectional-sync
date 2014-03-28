@@ -113,11 +113,11 @@ public class BusinessLogicTestDoNotCreateAccountIT extends AbstractTemplatesTest
 		deleteContactFromBFlow = getSubFlow("deleteContactFromBFlow");
 		deleteContactFromBFlow.initialise();
 
-		// Flow for querying the contact in source system
+		// Flow for querying contacts in sfdc A instance
 		queryContactFromAFlow = getSubFlow("queryContactFromAFlow");
 		queryContactFromAFlow.initialise();
 
-		// Flow for querying the contact in target system
+		// Flow for querying contacts in sfdc B instance
 		queryContactFromBFlow = getSubFlow("queryContactFromBFlow");
 		queryContactFromBFlow.initialise();
 	}

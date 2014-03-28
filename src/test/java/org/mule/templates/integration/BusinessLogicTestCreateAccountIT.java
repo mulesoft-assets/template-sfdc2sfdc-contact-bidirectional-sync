@@ -35,12 +35,12 @@ import com.sforce.soap.partner.SaveResult;
  * 
  */
 @SuppressWarnings("unchecked")
-public class BusinessLogicTestAssignDummyAccountIT extends AbstractTemplatesTestCase {
+public class BusinessLogicTestCreateAccountIT extends AbstractTemplatesTestCase {
 
 	private static final String ANYPOINT_TEMPLATE_NAME = "sfdc2sfdc-bidirectional-contact-sync";
 	private static final String A_INBOUND_FLOW_NAME = "triggerSyncFromAFlow";
 	private static final String B_INBOUND_FLOW_NAME = "triggerSyncFromBFlow";
-	private static final String ACCOUNT_ID_IN_B = "001n0000003hHsEAAU";
+	private static final String AN_ACCOUNT_ID_IN_B = "001n0000003hHsEAAU";
 	private static final int TIMEOUT_MILLIS = 60;
 
 	private static List<String> contactsCreatedInA = new ArrayList<String>();
@@ -73,8 +73,7 @@ public class BusinessLogicTestAssignDummyAccountIT extends AbstractTemplatesTest
 		System.setProperty("watermark.default.expression",
 				now.toString(dateFormat));
 
-		System.setProperty("account.sync.policy", "assignDummyAccount");
-		System.setProperty("account.id.in.b", ACCOUNT_ID_IN_B);
+		System.setProperty("account.sync.policy", "syncAccount");
 	}
 	
 	@Before
@@ -174,7 +173,7 @@ public class BusinessLogicTestAssignDummyAccountIT extends AbstractTemplatesTest
 								+ System.currentTimeMillis()
 								+ "portuga@mail.com");
 
-		SfdcObjectBuilder contactB = contact.with("AccountId", ACCOUNT_ID_IN_B);
+		SfdcObjectBuilder contactB = contact.with("AccountId", AN_ACCOUNT_ID_IN_B);
 
 		// Create contact in sand-box and keep track of it for posterior
 		// cleaning up

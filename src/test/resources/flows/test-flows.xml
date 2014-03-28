@@ -39,15 +39,15 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
 			doc:name="Salesforce" />
 	</sub-flow>
 
-	<sub-flow name="queryContactsAccountFromAFlow" doc:name="queryContactsAccountFromAFlow">
+	<sub-flow name="queryContactsAccountNameFromAFlow" doc:name="queryContactsAccountNameFromAFlow">
 		<sfdc:query-single config-ref="SalesforceA"
-			query="SELECT Account FROM Contact WHERE (Email = '#[payload['Email']]'  )"
+			query="SELECT Account.Name FROM Contact WHERE (Email = '#[payload['Email']]'  )"
 			doc:name="Salesforce" />
 	</sub-flow>
 
-	<sub-flow name="queryContactsAccountFromBFlow" doc:name="queryContactsAccountFromBFlow">
+	<sub-flow name="queryContactsAccountNameFromBFlow" doc:name="queryContactsAccountNameFromBFlow">
 		<sfdc:query-single config-ref="SalesforceB"
-			query="SELECT Account FROM Contact WHERE (Email = '#[payload['Email']]'  )"
+			query="SELECT Account.Name FROM Contact WHERE (Email = '#[payload['Email']]'  )"
 			doc:name="Salesforce" />
 	</sub-flow>
 
