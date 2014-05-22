@@ -53,7 +53,7 @@ payload['Account'].put('NumberOfEmployees', payload['Account']['NumberOfEmployee
             <batch:step name="setDummyAccountIdForBStep" accept-expression="'A'.equals(flowVars['sourceSystem']) &amp;&amp; 'assignDummyAccount' == '${account.sync.policy}'">
                 <expression-component doc:name="set contact's parent account id"><![CDATA[payload.put('AccountId', '${account.id.in.b}');]]></expression-component>
             </batch:step>
-            <batch:step name="forEachContactThatShouldBeUpsertedInB" accept-expression="'A'.equals(flowVars['sourceSystem']) && (recordVars['contactInTargetInstance'] is NullPayload || recordVars['contactInTargetInstance'].get('LastModifiedDate') &lt; payload.get('LastModifiedDate') &amp;&amp; '${sfdc.a.integration.user.id}' != payload.get('LastModifiedById'))">
+            <batch:step name="forEachContactThatShouldBeUpsertedInB" accept-expression="'A'.equals(flowVars['sourceSystem']) &amp;&amp; (recordVars['contactInTargetInstance'] is NullPayload || recordVars['contactInTargetInstance'].get('LastModifiedDate') &lt; payload.get('LastModifiedDate') &amp;&amp; '${sfdc.a.integration.user.id}' != payload.get('LastModifiedById'))">
 				<expression-component doc:name="prepare contact for upsert"><![CDATA[payload.remove('LastModifiedDate');
 payload.remove('LastModifiedById');
 payload.remove('Account');
