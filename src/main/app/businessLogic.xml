@@ -13,7 +13,7 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd"
 	version="EE-3.5.0">
     
-    <batch:job name="syncBatch">
+    <batch:job name="syncBatchA" max-failed-records="1">
         <batch:threading-profile poolExhaustedAction="WAIT"/>
         <batch:process-records>
         	
@@ -71,6 +71,18 @@ if(recordVars['contactInTargetInstance'] is org.mule.transport.NullPayload) {
                 </batch:commit>
             </batch:step>
 
+
+        </batch:process-records>
+        <batch:on-complete>
+            <logger message="1111111111111 release lock" level="INFO" doc:name="Logger"/>
+            <expression-component doc:name="Expression"><![CDATA[#[app.registry['PollSynchronizer'].releaseLock()]]]></expression-component>
+        </batch:on-complete>	
+    </batch:job>
+    <batch:job name="syncBatchB" max-failed-records="1">
+        <batch:threading-profile poolExhaustedAction="WAIT"/>
+        <batch:process-records>
+
+            
 			<!-- Steps to synchronize data from B to A -->
 			            
             <batch:step name="forEachContactInBGetContactInAStep" accept-expression="'B'.equals(flowVars['sourceSystem'])">
@@ -123,8 +135,12 @@ if(recordVars['contactInTargetInstance'] is org.mule.transport.NullPayload) {
 			        </sfdc:upsert>
 			        <logger message="Upsert Salesforce response: #[payload]" level="INFO" doc:name="log response"/>
                 </batch:commit>
-            </batch:step>
+            </batch:step>            
         </batch:process-records>
+        <batch:on-complete>
+            <logger message="22222222222 release lock" level="INFO" doc:name="Logger"/>
+            <expression-component doc:name="Expression"><![CDATA[#[app.registry['PollSynchronizer'].releaseLock()]]]></expression-component>
+        </batch:on-complete>
     </batch:job>
     
 </mule>
