@@ -1,37 +1,32 @@
 package org.mule.templates.util;
 
-import java.util.concurrent.locks.Lock;
-
-import org.mule.api.MuleContext;
-import org.mule.api.context.MuleContextAware;
+import java.util.concurrent.Semaphore;
 
 /**
- * This class objective is to create a critical area around the application in order to stop that two what ever threads access the area if other is in it.
+ * This class objective is to create a critical area around the application in
+ * order to stop that two what ever threads access the area if other is in it.
+ * 
+ * A semaphore initialized to one, and which is used such that it only has at
+ * most one permit available, can serve as a mutual exclusion lock. This is more
+ * commonly known as a binary semaphore, because it only has two states: one
+ * permit available, or zero permits available. When used in this way, the
+ * binary semaphore has the property (unlike many Lock implementations), that
+ * the "lock" can be released by a thread other than the owner (as semaphores
+ * have no notion of ownership).
  * 
  * @author javiercasal
  */
-public class PollSynchronizer implements MuleContextAware {
+public class PollSynchronizer {
 
-	private static final String LOCK_ID = "poll_semaphore_lock";
-	private MuleContext muleContext;
+	private Semaphore semaphore;
+	private static final int MAX_PERMITS_NUMBER = 1;
 
-	public void acquireLock() throws InterruptedException {
-		getLock().lock();
-		System.err.println("Lock acquired by " + Thread.currentThread().getName());
-	}
-
-	public void releaseLock() {
-		getLock().unlock();
-		System.err.println("Lock released by " + Thread.currentThread().getName());
-	}
-
-	@Override
-	public void setMuleContext(MuleContext context) {
-		this.muleContext = context;
-	}
-
-	private Lock getLock() {
-		return muleContext.getLockFactory().createLock(LOCK_ID);
+	public Semaphore getLock() {
+		if (semaphore == null) {
+			this.semaphore = new Semaphore(MAX_PERMITS_NUMBER);
+		}
+		
+		return this.semaphore;
 	}
 
 }
