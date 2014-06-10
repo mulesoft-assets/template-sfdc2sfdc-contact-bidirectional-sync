@@ -74,7 +74,7 @@ if(recordVars['contactInTargetInstance'] is org.mule.transport.NullPayload) {
 
         </batch:process-records>
         <batch:on-complete>
-            <expression-component doc:name="unlock processing"><![CDATA[#[app.registry['PollSynchronizer'].getLock().release()]]]></expression-component>
+            <expression-component doc:name="unlock processing"><![CDATA[#[app.registry['PollSynchronizer'].unlock()]]]></expression-component>
         </batch:on-complete>	
     </batch:job>
     <batch:job name="syncBatchB" max-failed-records="1">
@@ -137,7 +137,7 @@ if(recordVars['contactInTargetInstance'] is org.mule.transport.NullPayload) {
             </batch:step>            
         </batch:process-records>
         <batch:on-complete>
-            <expression-component doc:name="unlock processing"><![CDATA[#[app.registry['PollSynchronizer'].getLock().release()]]]></expression-component>
+            <expression-component doc:name="unlock processing"><![CDATA[#[app.registry['PollSynchronizer'].unlock()]]]></expression-component>
         </batch:on-complete>
     </batch:job>
     
