@@ -40,7 +40,8 @@ public class BusinessLogicTestAssignDummyAccountIT extends AbstractTemplatesTest
 	private static final String ANYPOINT_TEMPLATE_NAME = "sfdc2sfdc-bidirectional-contact-sync";
 	private static final String A_INBOUND_FLOW_NAME = "triggerSyncFromAFlow";
 	private static final String B_INBOUND_FLOW_NAME = "triggerSyncFromBFlow";
-	private static final String ACCOUNT_ID_IN_B = "001n0000003hHsEAAU";
+	private static final String ACCOUNT_ID_IN_B = "001n0000004JCPs"; 
+	private static final String ACCOUNT_ID_IN_A = "001n0000004JCPx"; 
 	private static final int TIMEOUT_MILLIS = 60;
 
 	private static List<String> contactsCreatedInA = new ArrayList<String>();
@@ -75,6 +76,7 @@ public class BusinessLogicTestAssignDummyAccountIT extends AbstractTemplatesTest
 
 		System.setProperty("account.sync.policy", "assignDummyAccount");
 		System.setProperty("account.id.in.b", ACCOUNT_ID_IN_B);
+		System.setProperty("account.id.in.a", ACCOUNT_ID_IN_A);
 	}
 	
 	@Before

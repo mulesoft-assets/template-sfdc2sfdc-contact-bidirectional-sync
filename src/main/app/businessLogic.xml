@@ -13,18 +13,18 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd"
 	version="EE-3.5.0">
     
-    <batch:job name="syncBatch">
+    <batch:job name="syncBatchA" max-failed-records="1">
         <batch:threading-profile poolExhaustedAction="WAIT"/>
         <batch:process-records>
         	
         	<!-- Steps to synchronize data from B to A -->
         	
-            <batch:step name="forEachContactInAGetContactInBStep" accept-expression="'A'.equals(flowVars['sourceSystem'])">
+            <batch:step name="forEachContactInAGetContactInBStep" >
                 <enricher source="#[payload]" target="#[recordVars['contactInTargetInstance']]" doc:name="store contact in target instance">
 	                <sfdc:query-single config-ref="SalesforceB" query="SELECT Id, FirstName, LastName, Email, LastModifiedDate FROM Contact WHERE (Email LIKE '#[payload['Email']]')" doc:name="query contact from B instance"/>
                 </enricher>
             </batch:step>
-            <batch:step name="findOrCreateAccountInBSetp" accept-expression="'A'.equals(flowVars['sourceSystem']) &amp;&amp; 'syncAccount' == '${account.sync.policy}'">
+            <batch:step name="findOrCreateAccountInBSetp" accept-expression="'syncAccount' == '${account.sync.policy}'">
                 <enricher source="#[payload]" target="#[recordVars['accountInTargetInstance']]" doc:name="store account in target instance">
                     <sfdc:query-single config-ref="SalesforceB" query="SELECT Id, Name FROM Account WHERE Name = '#[payload['Account']['Name']]'" doc:name="query account in B instance"/>
                 </enricher>
@@ -50,10 +50,10 @@ payload['Account'].put('NumberOfEmployees', payload['Account']['NumberOfEmployee
                 </choice>
                 <expression-component doc:name="set contact's parent account id"><![CDATA[payload.put('AccountId', recordVars['idOfAccountInTargetInstance']);]]></expression-component>
             </batch:step>
-            <batch:step name="setDummyAccountIdForBStep" accept-expression="'A'.equals(flowVars['sourceSystem']) &amp;&amp; 'assignDummyAccount' == '${account.sync.policy}'">
+            <batch:step name="setDummyAccountIdForBStep" accept-expression="'assignDummyAccount' == '${account.sync.policy}'">
                 <expression-component doc:name="set contact's parent account id"><![CDATA[payload.put('AccountId', '${account.id.in.b}');]]></expression-component>
             </batch:step>
-            <batch:step name="forEachContactThatShouldBeUpsertedInB" accept-expression="'A'.equals(flowVars['sourceSystem']) &amp;&amp; (recordVars['contactInTargetInstance'] is NullPayload || recordVars['contactInTargetInstance'].get('LastModifiedDate') &lt; payload.get('LastModifiedDate') &amp;&amp; '${sfdc.a.integration.user.id}' != payload.get('LastModifiedById'))">
+            <batch:step name="forEachContactThatShouldBeUpsertedInB" accept-expression="(recordVars['contactInTargetInstance'] is NullPayload || recordVars['contactInTargetInstance'].get('LastModifiedDate') &lt; payload.get('LastModifiedDate') &amp;&amp; '${sfdc.a.integration.user.id}' != payload.get('LastModifiedById'))">
 				<expression-component doc:name="prepare contact for upsert"><![CDATA[payload.remove('LastModifiedDate');
 payload.remove('LastModifiedById');
 payload.remove('Account');
@@ -71,14 +71,25 @@ if(recordVars['contactInTargetInstance'] is org.mule.transport.NullPayload) {
                 </batch:commit>
             </batch:step>
 
+
+        </batch:process-records>
+        <batch:on-complete>
+            <expression-component doc:name="unlock processing"><![CDATA[#[app.registry['PollSynchronizer'].unlock()]]]></expression-component>
+        </batch:on-complete>	
+    </batch:job>
+    <batch:job name="syncBatchB" max-failed-records="1">
+        <batch:threading-profile poolExhaustedAction="WAIT"/>
+        <batch:process-records>
+
+            
 			<!-- Steps to synchronize data from B to A -->
 			            
-            <batch:step name="forEachContactInBGetContactInAStep" accept-expression="'B'.equals(flowVars['sourceSystem'])">
+            <batch:step name="forEachContactInBGetContactInAStep" >
                 <enricher source="#[payload]" target="#[recordVars['contactInTargetInstance']]" doc:name="store contact in target instance">
 	                <sfdc:query-single config-ref="SalesforceA" query="SELECT Id, FirstName, LastName, Email, LastModifiedDate FROM Contact WHERE (Email LIKE '#[payload['Email']]')" doc:name="query contact from A instance"/>
                 </enricher>
             </batch:step>
-            <batch:step name="findOrCreateAccountInASetp" accept-expression="'B'.equals(flowVars['sourceSystem']) &amp;&amp; 'syncAccount' == '${account.sync.policy}'">
+            <batch:step name="findOrCreateAccountInASetp" accept-expression="'syncAccount' == '${account.sync.policy}'">
                 <enricher source="#[payload]" target="#[recordVars['accountInTargetInstance']]" doc:name="store account in target instance">
                     <sfdc:query-single config-ref="SalesforceA" query="SELECT Id, Name FROM Account WHERE Name = '#[payload['Account']['Name']]'" doc:name="query account in A instance"/>
                 </enricher>
@@ -104,10 +115,10 @@ payload['Account'].put('NumberOfEmployees', payload['Account']['NumberOfEmployee
                 </choice>
                 <expression-component doc:name="set contact's parent account id"><![CDATA[payload.put('AccountId', recordVars['idOfAccountInTargetInstance']);]]></expression-component>
             </batch:step>
-            <batch:step name="setDummyAccountIdForAStep" accept-expression="'B'.equals(flowVars['sourceSystem']) &amp;&amp; 'assignDummyAccount' == '${account.sync.policy}'">
+            <batch:step name="setDummyAccountIdForAStep" accept-expression=" 'assignDummyAccount' == '${account.sync.policy}'">
                 <expression-component doc:name="set contact's parent account id"><![CDATA[payload.put('AccountId', '${account.id.in.a}');]]></expression-component>
             </batch:step>
-            <batch:step name="forEachContactThatShouldBeUpsertedInA" accept-expression="'B'.equals(flowVars['sourceSystem']) &amp;&amp; (recordVars['contactInTargetInstance'] is NullPayload || recordVars['contactInTargetInstance'].get('LastModifiedDate') &lt; payload.get('LastModifiedDate') &amp;&amp; '${sfdc.b.integration.user.id}' != payload.get('LastModifiedById'))">
+            <batch:step name="forEachContactThatShouldBeUpsertedInA" accept-expression=" (recordVars['contactInTargetInstance'] is NullPayload || recordVars['contactInTargetInstance'].get('LastModifiedDate') &lt; payload.get('LastModifiedDate') &amp;&amp; '${sfdc.b.integration.user.id}' != payload.get('LastModifiedById'))">
 				<expression-component doc:name="prepare contact for upsert"><![CDATA[payload.remove('LastModifiedDate');
 payload.remove('LastModifiedById');
 payload.remove('Account');
@@ -123,8 +134,11 @@ if(recordVars['contactInTargetInstance'] is org.mule.transport.NullPayload) {
 			        </sfdc:upsert>
 			        <logger message="Upsert Salesforce response: #[payload]" level="INFO" doc:name="log response"/>
                 </batch:commit>
-            </batch:step>
+            </batch:step>            
         </batch:process-records>
+        <batch:on-complete>
+            <expression-component doc:name="unlock processing"><![CDATA[#[app.registry['PollSynchronizer'].unlock()]]]></expression-component>
+        </batch:on-complete>
     </batch:job>
     
 </mule>
