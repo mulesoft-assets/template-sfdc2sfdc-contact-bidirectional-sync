@@ -151,10 +151,8 @@ public class BusinessLogicTestDoNotCreateAccountIT extends AbstractTemplatesTest
 								+ System.currentTimeMillis()
 								+ "portuga@mail.com");
 
-		SfdcObjectBuilder justCreatedContact = contact.with("Description",
-				"Please enter your description here");
-		SfdcObjectBuilder updatedContact = contact.with("Description",
-				"Zeze's adoptive father");
+		SfdcObjectBuilder justCreatedContact = contact;
+		SfdcObjectBuilder updatedContact = contact;
 
 		// Create contacts in sand-boxes and keep track of them for posterior
 		// cleaning up

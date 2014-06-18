@@ -40,7 +40,7 @@ public class BusinessLogicTestCreateAccountIT extends AbstractTemplatesTestCase 
 	private static final String ANYPOINT_TEMPLATE_NAME = "sfdc2sfdc-bidirectional-contact-sync";
 	private static final String A_INBOUND_FLOW_NAME = "triggerSyncFromAFlow";
 	private static final String B_INBOUND_FLOW_NAME = "triggerSyncFromBFlow";
-	private static final String AN_ACCOUNT_ID_IN_B = "001n0000003hHsEAAU";
+	private static final String AN_ACCOUNT_ID_IN_B = "0012000001AHHlv";
 	private static final int TIMEOUT_MILLIS = 60;
 
 	private static List<String> contactsCreatedInA = new ArrayList<String>();
@@ -166,7 +166,6 @@ public class BusinessLogicTestCreateAccountIT extends AbstractTemplatesTestCase 
 		SfdcObjectBuilder contact = aContact()
 				.with("FirstName", "Manuel")
 				.with("LastName", "Valadares")
-				.with("Description", "Some nice description")
 				.with("MailingCountry", "US")
 				.with("Email",
 						ANYPOINT_TEMPLATE_NAME + "-"
