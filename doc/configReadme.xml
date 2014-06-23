@@ -1,0 +1,100 @@
+<?xml version="1.0"?>
+<configuration>
+	<placeholders>
+		<placeholder id="template_name">Salesforce to Salesforce Contact Bidirectional Sync</placeholder>
+	</placeholders>
+	<sections>
+		<section id="use_case">
+As a Salesforce admin I want to have my Contacts syncronized between two different Salesforce orgs.
+
+This Template should serve as a foundation for setting an online bi-directional sync of Contacts between two SalesForce instances, being able to specify filtering criterias. 
+
+The integration main behaviour is polling for changes (new Contacts or modified ones) that have occured in any of the Salesforces instances during a certain defined period of time. For those Contacts that both have not been updated yet the integration triggers an upsert (update or create depending the case) taking the last modification as the one that should be applied.
+
+Requirements have been set not only to be used as examples, but also to stablish starting point to adapt the integration to any given requirements.
+		</section>
+		<section id="considerations">
+<![CDATA[
+To make this Anypoint Template run, there are certain preconditions that must be considered. All of them deal with the preparations in both, that must be made in order for all to run smoothly. **Failling to do so could lead to unexpected behavior of the template.**
+]]>
+		</section>
+		<section id="run_it">
+<![CDATA[
+See below.
+]]>
+		</section>
+		<section id="default_running_on_premise">
+<![CDATA[
+Complete all properties in one of the property files, for example in [mule.prod.properties] (../blob/master/src/main/resources/mule.prod.properties) and run your app with the corresponding environment variable to use it. To follow the example, this will be `mule.env=prod`.
+
+After this,  the integration will fetch the updates occured since the date configured in the watermark.default.expression property.
+]]>
+		</section>
+		<section id="default_running_on_cloudhub">
+<![CDATA[
+In order to [create your application on CloudHub](http://www.mulesoft.org/documentation/display/current/Hello+World+on+CloudHub) you should to go to Deployment > Advanced to set all environment variables detailed in **Properties to be configured** as well as the **mule.env**. 
+
+Once your app is all set and started, supposing you choose as domain name `sfdc2sfdc-bidirectional-contact-sync` to trigger the use case you just need to hit `http://sfdc2sfdc-bidirectional-contact-sync.cloudhub.io/synccontacts` and report will be sent to the emails configured.
+]]>
+		</section>
+		<section id="application_configuration">
+		<![CDATA[
+**Application configuration**
++ polling.frequency `10000`  
+This are the miliseconds that will run between two different checks for updates in Salesforce
+
++ watermark.default.expression `2014-02-25T11:00:00.000Z`  
+This property is an important one, as it configures what should be the start point of the synchronization. If the use case includes synchronizing every contact created from the begining of the times, you should use a date previous to any contact creation (perhaphs `1900-01-01T08:00:00.000Z` is a good choice). If you want to synchronize the contacts created from now on, then you should use a default value according to that requirement (for example, today is Febraury 25th of 2014 and it's eleven o'clock, then I would take the following value `2014-02-25T11:00:00.000Z`).
+
+**SalesForce Connector configuration for company A**
++ sfdc.a.username `bob.dylan@orga`
++ sfdc.a.password `DylanPassword123`
++ sfdc.a.securityToken `avsfwCUl7apQs56Xq2AKi3X`
++ sfdc.a.url `https://login.salesforce.com/services/Soap/u/26.0`
+
+**SalesForce Connector configuration for company B**
++ sfdc.b.username `joan.baez@orgb`
++ sfdc.b.password `JoanBaez456`
++ sfdc.b.securityToken `ces56arl7apQs56XTddf34X`
++ sfdc.b.url `https://login.salesforce.com/services/Soap/u/26.0`
+
+**Some points to consider about configuration properties**
+
+Polling Frecuency is expressed in miliseconds (different time units can be used) and the Watermark Default Expression defines the date to be used to query the first time the integration runs. [More details about polling and watermarking.](http://www.mulesoft.org/documentation/display/current/Poll+Reference)
+
+The date format accepted in SFDC Query Language is either YYYY-MM-DDThh:mm:ss+hh:mm or you can use Constants (Like YESTERDAY in the example). [More information about Dates in SFDC.](http://www.salesforce.com/us/developer/docs/officetoolkit/Content/sforce_api_calls_soql_select_dateformats.htm)
+
+The query fields list must include both 'Email' and 'LastModifiedDate' fields, as those fields are embedded in the integration business logic
+]]>
+		</section>
+		<section id="api_calls">
+		<![CDATA[
+Salesforce imposes limits on the number of API Calls that can be made. Therefore calculating this amount may be an important factor to consider. The Anypoint Template calls to the API can be calculated using the formula:
+
+***1 + X + X / 200***
+
+Being ***X*** the number of Contacts to be synchronized on each run. 
+
+The division by ***200*** is because, by default, Contacts are gathered in groups of 200 for each Upsert API Call in the commit step. Also consider that this calls are executed repeatedly every polling cycle.	
+
+For instance if 10 records are fetched from origin instance, then 12 api calls will be made (1 + 10 + 1).
+]]>
+		</section>
+		<section id="default_endpoints_xml">
+		<![CDATA[
+This is the file where you will found the inbound and outbound sides of your integration app.
+It is intented to define the application API.
+]]>
+		</section>
+		<section id="default_business_logic_xml">
+		<![CDATA[
+Functional aspect of the Anypoint Template is implemented on this XML, directed by a batch job that will be responsible for creations/updates. The severeal message processors constitute four high level actions that fully implement the logic of this Anypoint Template:
+
+1. Job execution is invoked from triggerFlow (inboundEndpoints.xml) everytime there is a new query executed asking for created/updated Contacts.
+2. During the Process stage, each SFDC contact will be filtered depending on, if it has an existing matching contact in the opposite Salesforce instace and vise versa.
+3. The last step of the Process stage will group the contacts and create/update them in Salesforce.
+Finally during the On Complete stage the Anypoint Template will logoutput statistics data into the console.
+]]>
+		</section>
+	</sections>
+</configuration>
