@@ -17,7 +17,7 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
         <batch:threading-profile poolExhaustedAction="WAIT"/>
         <batch:process-records>
         	
-        	<!-- Steps to synchronize data from B to A -->
+        	<!-- Steps to synchronize data from A to B -->
         	
             <batch:step name="forEachContactInAGetContactInBStep" >
                 <enricher source="#[payload]" target="#[recordVars['contactInTargetInstance']]" doc:name="store contact in target instance">

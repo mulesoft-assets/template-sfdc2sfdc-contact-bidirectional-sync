@@ -46,8 +46,8 @@ public class BusinessLogicTestAssignDummyAccountIT extends AbstractTemplatesTest
 	private static final String ANYPOINT_TEMPLATE_NAME = "sfdc2sfdc-bidirectional-contact-sync";
 	private static final String A_INBOUND_FLOW_NAME = "triggerSyncFromAFlow";
 	private static final String B_INBOUND_FLOW_NAME = "triggerSyncFromBFlow";
-	private static final String ACCOUNT_ID_IN_B = "0012000001AHHlv"; 
-	private static final String ACCOUNT_ID_IN_A = "0012000001AHHqY"; 
+	private static final String ACCOUNT_ID_IN_B = "0012000001AHHlvAAH"; 
+	private static final String ACCOUNT_ID_IN_A = "0012000001AOHJWAA5"; 
 	private static final int TIMEOUT_MILLIS = 60;
 
 	private static List<String> contactsCreatedInA = new ArrayList<String>();
@@ -202,15 +202,6 @@ public class BusinessLogicTestAssignDummyAccountIT extends AbstractTemplatesTest
 		Assert.assertTrue(
 				"Some contacts are not synchronized between systems. "
 						+ contactMapsDifference.toString(), contactMapsDifference.areEqual());
-		
-		Map<String, String> retrievedContactsAccountIdFromA = (Map<String, String>) queryContact(
-				contact.build(), queryContactsAccountNameFromAFlow);
-		Map<String, String> retrievedContactsAccountIdFromB = (Map<String, String>) queryContact(
-				contact.build(), queryContactsAccountNameFromBFlow);
-		final MapDifference<String, String> accountMapsDifference = Maps.difference(
-				retrievedContactsAccountIdFromA, retrievedContactsAccountIdFromB);
-		Assert.assertTrue("The contact should belong to the same account!" 
-						+ accountMapsDifference.toString(), accountMapsDifference.areEqual());
 	}
 
 	private Object queryContact(Map<String, Object> contact,
