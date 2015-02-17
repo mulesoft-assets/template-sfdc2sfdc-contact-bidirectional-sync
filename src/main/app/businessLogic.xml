@@ -11,7 +11,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 http://www.mulesoft.org/schema/mule/objectstore http://www.mulesoft.org/schema/mule/objectstore/current/mule-objectstore.xsd
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd"
-	version="EE-3.5.0">
+	version="EE-3.6.0">
     
     <batch:job name="syncBatchA" max-failed-records="1">
         <batch:threading-profile poolExhaustedAction="WAIT"/>
@@ -49,9 +49,6 @@ payload['Account'].put('NumberOfEmployees', payload['Account']['NumberOfEmployee
                     </otherwise>
                 </choice>
                 <expression-component doc:name="set contact's parent account id"><![CDATA[payload.put('AccountId', recordVars['idOfAccountInTargetInstance']);]]></expression-component>
-            </batch:step>
-            <batch:step name="setDummyAccountIdForBStep" accept-expression="'assignDummyAccount' == '${account.sync.policy}'">
-                <expression-component doc:name="set contact's parent account id"><![CDATA[payload.put('AccountId', '${account.id.in.b}');]]></expression-component>
             </batch:step>
             <batch:step name="forEachContactThatShouldBeUpsertedInB" accept-expression="(recordVars['contactInTargetInstance'] is NullPayload || recordVars['contactInTargetInstance'].get('LastModifiedDate') &lt; payload.get('LastModifiedDate') &amp;&amp; '${sfdc.a.integration.user.id}' != payload.get('LastModifiedById'))">
 				<expression-component doc:name="prepare contact for upsert"><![CDATA[payload.remove('LastModifiedDate');
@@ -114,9 +111,6 @@ payload['Account'].put('NumberOfEmployees', payload['Account']['NumberOfEmployee
                     </otherwise>
                 </choice>
                 <expression-component doc:name="set contact's parent account id"><![CDATA[payload.put('AccountId', recordVars['idOfAccountInTargetInstance']);]]></expression-component>
-            </batch:step>
-            <batch:step name="setDummyAccountIdForAStep" accept-expression=" 'assignDummyAccount' == '${account.sync.policy}'">
-                <expression-component doc:name="set contact's parent account id"><![CDATA[payload.put('AccountId', '${account.id.in.a}');]]></expression-component>
             </batch:step>
             <batch:step name="forEachContactThatShouldBeUpsertedInA" accept-expression=" (recordVars['contactInTargetInstance'] is NullPayload || recordVars['contactInTargetInstance'].get('LastModifiedDate') &lt; payload.get('LastModifiedDate') &amp;&amp; '${sfdc.b.integration.user.id}' != payload.get('LastModifiedById'))">
 				<expression-component doc:name="prepare contact for upsert"><![CDATA[payload.remove('LastModifiedDate');

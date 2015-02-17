@@ -25,13 +25,13 @@ Note that using this template is subject to the conditions of this [License Agre
 Please review the terms of the license before downloading and using this template. In short, you are allowed to use the template for free with Mule ESB Enterprise Edition, CloudHub, or as a trial in Anypoint Studio.
 
 # Use Case <a name="usecase"/>
-As a Salesforce admin I want to have my Contacts syncronized between two different Salesforce orgs.
+As a Salesforce admin I want to have my Contacts synchronized between two different Salesforce orgs.
 
 This Template should serve as a foundation for setting an online bi-directional sync of Contacts between two SalesForce instances, being able to specify filtering criterias. 
 
-The integration main behaviour is polling for changes (new Contacts or modified ones) that have occured in any of the Salesforces instances during a certain defined period of time. For those Contacts that both have not been updated yet the integration triggers an upsert (update or create depending the case) taking the last modification as the one that should be applied.
+The integration main behaviour is polling for changes (new Contacts or modified ones) that have occurred in any of the Salesforces instances during a certain defined period of time. For those Contacts that both have not been updated yet the integration triggers an upsert (update or create depending the case) taking the last modification as the one that should be applied.
 
-Requirements have been set not only to be used as examples, but also to stablish starting point to adapt the integration to any given requirements.
+Requirements have been set not only to be used as examples, but also to establish starting point to adapt the integration to any given requirements.
 
 # Considerations <a name="considerations"/>
 
@@ -141,7 +141,7 @@ In order to use this Mule Anypoint Template you need to configure properties (Cr
 ### Application configuration
 **Application configuration**
 + account.sync.policy `syncAccount`  
-This defines the policy for Account syncing between both Salesforce instances. It can be set as assignDummyAccount ir syncAccount. The first one will use the account ID's set in the "account.id.in" properties.
+This defines the policy for Account syncing between both Salesforce instances. It can be empty or set as syncAccount.
 
 + polling.frequency `10000`  
 This are the miliseconds that will run between two different checks for updates in Salesforce
@@ -155,7 +155,6 @@ This property is an important one, as it configures what should be the start poi
 + sfdc.a.securityToken `avsfwCUl7apQs56Xq2AKi3X`
 + sfdc.a.url `https://login.salesforce.com/services/Soap/u/26.0`
 + sfdc.a.integration.user.id `A0ed000BO9T`
-+ account.id.in.a `0032001201ATHlvAAH`
 
 **SalesForce Connector configuration for company B**
 + sfdc.b.username `joan.baez@orgb`
@@ -163,7 +162,6 @@ This property is an important one, as it configures what should be the start poi
 + sfdc.b.securityToken `ces56arl7apQs56XTddf34X`
 + sfdc.b.url `https://login.salesforce.com/services/Soap/u/26.0`
 + sfdc.b.integration.user.id `B0ed000BO9T`  
-+ account.id.in.b `0032001201ATHlvAAH`
 
 **Some points to consider about configuration properties**
 
