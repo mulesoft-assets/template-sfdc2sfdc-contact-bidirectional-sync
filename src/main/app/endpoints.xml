@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+<mule xmlns:spring="http://www.springframework.org/schema/beans" xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
 	xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" 
 	xmlns="http://www.mulesoft.org/schema/mule/core"
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
@@ -8,18 +8,19 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
-http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd">
+http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd">
 
 	<!-- This is the endpoints file. In this file you should declare all your inbound and outbound endpoints in order to control the access to your integration -->
 
-    <flow name="triggerSyncFromAFlow" doc:name="triggerSyncFromAFlow" processingStrategy="synchronous" initialState="started">
+    <flow name="triggerSyncFromAFlow"  processingStrategy="synchronous" initialState="started">
 		<poll doc:name="Poll">
 			<fixed-frequency-scheduler frequency="${polling.frequency}" startDelay="10000" />
 			<watermark variable="lastQueryDateA" default-expression="${watermark.default.expression}" selector="MAX" selector-expression="#[payload.LastModifiedDate]" />
             <processor-chain doc:name="Processor Chain">
                 <expression-component doc:name="lock processing to avoid two syncs occurring at the same time"><![CDATA[app.registry['PollSynchronizer'].lock();]]></expression-component>
                 <sfdc:query config-ref="SalesforceA" query="dsql:SELECT Account.Id, Account.Name, Account.Description, Account.Industry, Account.NumberOfEmployees, Email,FirstName, LastModifiedById, LastModifiedDate, LastName, MailingCountry, Title
- FROM Contact WHERE (LastModifiedDate &gt; #[flowVars['lastQueryDateA']] AND Email &lt;&gt; null) ORDER BY LastModifiedDate ASC LIMIT 200" doc:name="fetch contacts from A"/>
+ FROM Contact WHERE (LastModifiedDate &gt; #[flowVars['lastQueryDateA']] AND Email &lt;&gt; null) AND LastModifiedById &lt;&gt; '${sfdc.a.integration.user.id}' ORDER BY LastModifiedDate ASC LIMIT 200" doc:name="fetch contacts from A"/>
             </processor-chain>
 
 		</poll>
@@ -28,14 +29,14 @@ http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfd
         <exception-strategy ref="defaultChoiceExceptionStrategy" doc:name="Reference Exception Strategy"/>
     </flow>
     
-	<flow name="triggerSyncFromBFlow" doc:name="triggerSyncFromBFlow" processingStrategy="synchronous" initialState="started">
+	<flow name="triggerSyncFromBFlow"  processingStrategy="synchronous" initialState="started">
    		<poll doc:name="Poll">
 			<fixed-frequency-scheduler frequency="${polling.frequency}" startDelay="10000" />
 			<watermark variable="lastQueryDateB" default-expression="${watermark.default.expression}" selector="MAX" selector-expression="#[payload.LastModifiedDate]" />
             <processor-chain doc:name="Processor Chain">
                 <expression-component doc:name="lock processing to avoid two syncs occurring at the same time"><![CDATA[app.registry['PollSynchronizer'].lock();]]></expression-component>
                 <sfdc:query config-ref="SalesforceB" query="dsql:SELECT Account.Id, Account.Name, Account.Description, Account.Industry, Account.NumberOfEmployees, Email,FirstName, LastModifiedById, LastModifiedDate, LastName, MailingCountry, Title 
- FROM Contact WHERE (LastModifiedDate &gt; #[flowVars['lastQueryDateB']] AND Email &lt;&gt; null) ORDER BY LastModifiedDate ASC LIMIT 200" doc:name="fetch contacts from B"/>
+ FROM Contact WHERE (LastModifiedDate &gt; #[flowVars['lastQueryDateB']] AND Email &lt;&gt; null) AND LastModifiedById &lt;&gt; '${sfdc.b.integration.user.id}' ORDER BY LastModifiedDate ASC LIMIT 200" doc:name="fetch contacts from B"/>
             </processor-chain>
 
 		</poll>
