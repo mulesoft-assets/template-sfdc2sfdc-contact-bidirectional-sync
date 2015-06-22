@@ -8,9 +8,14 @@ package org.mule.templates.integration;
 
 import static org.mule.templates.builders.SfdcObjectBuilder.aContact;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -46,9 +51,10 @@ public class BusinessLogicTestCreateAccountIT extends AbstractTemplatesTestCase 
 	private static final String ANYPOINT_TEMPLATE_NAME = "sfdc2sfdc-bidirectional-contact-sync";
 	private static final String A_INBOUND_FLOW_NAME = "triggerSyncFromAFlow";
 	private static final String B_INBOUND_FLOW_NAME = "triggerSyncFromBFlow";
-	private static final String AN_ACCOUNT_ID_IN_B = "0012000001Ook37AAB";
+	private static final String PATH_TO_TEST_PROPERTIES = "./src/test/resources/mule.test.properties";
 	private static final int TIMEOUT_MILLIS = 60;
-
+	private static String AN_ACCOUNT_ID_IN_B;
+	
 	private static List<String> contactsCreatedInA = new ArrayList<String>();
 	private static List<String> contactsCreatedInB = new ArrayList<String>();
 	private static SubflowInterceptingChainLifecycleWrapper deleteContactFromAFlow;
@@ -65,7 +71,11 @@ public class BusinessLogicTestCreateAccountIT extends AbstractTemplatesTestCase 
 	private SubflowInterceptingChainLifecycleWrapper queryContactsAccountNameFromBFlow;
 
 	@BeforeClass
-	public static void beforeTestClass() {
+	public static void beforeTestClass() throws FileNotFoundException, IOException {
+		Properties props = new Properties();
+		props.load(new FileInputStream(new File(PATH_TO_TEST_PROPERTIES)));
+		AN_ACCOUNT_ID_IN_B = props.getProperty("test.sfdc.b.account.id");
+		
 		System.setProperty("page.size", "1000");
 
 		// Set polling frequency to 10 seconds
