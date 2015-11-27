@@ -3,7 +3,6 @@
 <mule xmlns:context="http://www.springframework.org/schema/context" 
 	xmlns="http://www.mulesoft.org/schema/mule/core"
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	version="EE-3.7.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
 	xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc"
 	xmlns:spring="http://www.springframework.org/schema/beans" 

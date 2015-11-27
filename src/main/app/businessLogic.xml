@@ -6,7 +6,7 @@
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc"
-	version="EE-3.7.0"
+	
 	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
 http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
@@ -31,10 +31,33 @@ http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/m
                 <enricher source="#[payload == null ? null : payload.Id]" target="#[payload.AccountId]" doc:name="store result in 'payload.AccountId'">
                     <sfdc:query-single config-ref="SalesforceB" query="SELECT Id, Name FROM Account WHERE Name = '#[payload['Account']['Name']]'" doc:name="query account in B instance"/>
                 </enricher>
-                <flow-ref name="findOrCreateAccountFlow" doc:name="call findOrCreateAccountFlow"/>
+                <choice doc:name="Account in B found?">
+                    <when expression="">
+                        <enricher source="#[payload.getId()]" target="#[payload['AccountId']]" doc:name="store result in 'payload.AccountId'">
+                            <processor-chain doc:name="Processor Chain">
+                                <dw:transform-message doc:name="prepare Account for insert">
+                                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	AccountNumber: payload.Account.AccountNumber,
+	Description : payload.Account.Description,
+	Name: payload.Account.Name,
+	(NumberOfEmployees : payload.Account.NumberOfEmployees as :number) when (payload.Account.NumberOfEmployees != null),
+	Industry: payload.Account.Industry
+}]]></dw:set-payload>
+                                </dw:transform-message>
+                                <sfdc:create-single config-ref="SalesforceB" type="Account" doc:name="create Account in Salesforce Instance B"/>
+                            </processor-chain>
+                        </enricher>
+                    </when>
+                    <otherwise>
+                        <logger message="Account already exists. Nothing to create." level="INFO" doc:name="Logger"/>
+                    </otherwise>
+                </choice>
 
             </batch:step>
-            <batch:step name="forEachContactThatShouldBeUpsertedInB" accept-expression="payload.Id == null ? true : (payload.LastModifiedDate &gt; payload.LastModifiedDateB)">
+            <batch:step name="forEachContactThatShouldBeUpsertedInB" accept-expression="payload.Id == null ? true : ((new org.joda.time.DateTime(payload.LastModifiedDate)).isAfter(new org.joda.time.DateTime(payload.LastModifiedDateB)))">
 
                 <batch:commit size="200" doc:name="Batch Commit">
 			        <dw:transform-message doc:name="prepare Contacts for upsert">
@@ -56,7 +79,7 @@ payload map
 			        <sfdc:upsert config-ref="SalesforceB" externalIdFieldName="Id" type="Contact" doc:name="upsert contacts in B">
 			            <sfdc:objects ref="#[payload]"/>
 			        </sfdc:upsert>
-			        <logger message="Upsert Salesforce response: #[payload]" level="INFO" doc:name="log response"/>
+			        <logger message="Upsert Salesforce B response: #[payload]" level="INFO" doc:name="log response"/>
                 </batch:commit>
             </batch:step>
 
@@ -84,10 +107,33 @@ payload map
                 <enricher source="#[payload == null ? null : payload.Id]" target="#[payload.AccountId]" doc:name="store result in 'payload.AccountId'">
                     <sfdc:query-single config-ref="SalesforceA" query="SELECT Id, Name FROM Account WHERE Name = '#[payload['Account']['Name']]'" doc:name="query account in A instance"/>
                 </enricher>
-                <flow-ref name="findOrCreateAccountFlow" doc:name="call findOrCreateAccountFlow"/>
+                <choice doc:name="Account in A found?">
+                    <when expression="#[payload['AccountId'] == null]">
+                        <enricher source="#[payload.getId()]" target="#[payload['AccountId']]" doc:name="store result in 'payload.AccountId'">
+                            <processor-chain doc:name="Processor Chain">
+                                <dw:transform-message doc:name="prepare Account for insert">
+                                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	AccountNumber: payload.Account.AccountNumber,
+	Description : payload.Account.Description,
+	Name: payload.Account.Name,
+	(NumberOfEmployees : payload.Account.NumberOfEmployees as :number) when (payload.Account.NumberOfEmployees != null),
+	Industry: payload.Account.Industry
+}]]></dw:set-payload>
+                                </dw:transform-message>
+                                <sfdc:create-single config-ref="SalesforceA" type="Account" doc:name="create Account in Salesforce Instance A"/>
+                            </processor-chain>
+                        </enricher>
+                    </when>
+                    <otherwise>
+                        <logger message="Account already exists. Nothing to create." level="INFO" doc:name="Logger"/>
+                    </otherwise>
+                </choice>
 
             </batch:step>
-            <batch:step name="forEachContactThatShouldBeUpsertedInA" accept-expression="payload.Id == null ? true : (payload.LastModifiedDate &gt; payload.LastModifiedDateA)">
+            <batch:step name="forEachContactThatShouldBeUpsertedInA" accept-expression="payload.Id == null ? true : ((new org.joda.time.DateTime(payload.LastModifiedDate)).isAfter(new org.joda.time.DateTime(payload.LastModifiedDateA)))">
 
                 <batch:commit size="200" doc:name="Batch Commit">
 			        <dw:transform-message doc:name="prepare Contacts for upsert">
@@ -109,7 +155,7 @@ payload map
 			        <sfdc:upsert config-ref="SalesforceA" externalIdFieldName="Id" type="Contact" doc:name="upsert contacts in A">
 			            <sfdc:objects ref="#[payload]"/>
 			        </sfdc:upsert>
-			        <logger message="Upsert Salesforce response: #[payload]" level="INFO" doc:name="log response"/>
+			        <logger message="Upsert Salesforce A response: #[payload]" level="INFO" doc:name="log response"/>
                 </batch:commit>
             </batch:step>            
         </batch:process-records>
@@ -117,40 +163,6 @@ payload map
             <expression-component doc:name="unlock processing"><![CDATA[#[app.registry['PollSynchronizer'].unlock()]]]></expression-component>
         </batch:on-complete>
     </batch:job>
-    
-    <sub-flow name="findOrCreateAccountFlow" >
-
-        <choice doc:name="Choice">
-            <when expression="#[payload['AccountId'] == null]">
-                <enricher target="#[payload['AccountId']]" doc:name="store result in 'payload.AccountId'" source="#[payload.getId()]">
-            <processor-chain doc:name="Processor Chain">
-                <dw:transform-message doc:name="Transform Message">
-                    <dw:set-payload><![CDATA[%dw 1.0
-%output application/java
----
-{
-	AccountNumber: payload.Account.AccountNumber,
-	Description : payload.Account.Description,
-	Name: payload.Account.Name,
-	(NumberOfEmployees : payload.Account.NumberOfEmployees as :number) when (payload.Account.NumberOfEmployees != null),
-	Industry: payload.Account.Industry
-}]]></dw:set-payload>
-                </dw:transform-message>
-
-                <sfdc:create-single config-ref="SalesforceB" type="Account" doc:name="create Account in Salesforce Instance B">
-
-                </sfdc:create-single>
-
-            </processor-chain>
-        </enricher>
-            </when>
-            <otherwise>
-                <logger message="Account already exists. Nothing to create." level="INFO" doc:name="Logger"/>
-
-            </otherwise>
-        </choice>
-
-    </sub-flow>
 
     
 </mule>
