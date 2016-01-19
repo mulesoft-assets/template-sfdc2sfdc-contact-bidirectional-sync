@@ -154,18 +154,24 @@ This are the miliseconds that will run between two different checks for updates 
 This property is an important one, as it configures what should be the start point of the synchronization. If the use case includes synchronizing every contact created from the begining of the times, you should use a date previous to any contact creation (perhaphs `1900-01-01T08:00:00.000Z` is a good choice). If you want to synchronize the contacts created from now on, then you should use a default value according to that requirement (for example, today is Febraury 25th of 2014 and it's eleven o'clock, then I would take the following value `2014-02-25T11:00:00.000Z`).
 
 **SalesForce Connector configuration for company A**
+
 + sfdc.a.username `bob.dylan@orga`
 + sfdc.a.password `DylanPassword123`
 + sfdc.a.securityToken `avsfwCUl7apQs56Xq2AKi3X`
 + sfdc.a.url `https://login.salesforce.com/services/Soap/u/32.0`
 + sfdc.a.integration.user.id `A0ed000BO9T`
 
+	**Note:** To find out the correct *sfdc.integration.user.id* value, please, refer to example project **Salesforce Data Retrieval** in [Anypoint Exchange](http://www.mulesoft.org/documentation/display/current/Anypoint+Exchange).
+
 **SalesForce Connector configuration for company B**
+
 + sfdc.b.username `joan.baez@orgb`
 + sfdc.b.password `JoanBaez456`
 + sfdc.b.securityToken `ces56arl7apQs56XTddf34X`
 + sfdc.b.url `https://login.salesforce.com/services/Soap/u/32.0`
-+ sfdc.b.integration.user.id `B0ed000BO9T`  
++ sfdc.b.integration.user.id `B0ed000BO9T`
+
+	**Note:** To find out the correct *sfdc.integration.user.id* value, please, refer to example project **Salesforce Data Retrieval** in [Anypoint Exchange](http://www.mulesoft.org/documentation/display/current/Anypoint+Exchange).
 
 **Some points to consider about configuration properties**
 
