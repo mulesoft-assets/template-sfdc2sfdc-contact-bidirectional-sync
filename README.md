@@ -161,7 +161,7 @@ This property is an important one, as it configures what should be the start poi
 + sfdc.a.url `https://login.salesforce.com/services/Soap/u/32.0`
 + sfdc.a.integration.user.id `A0ed000BO9T`
 
-	**Note:** To find out the correct *sfdc.integration.user.id* value, please, refer to example project **Salesforce Data Retrieval** in [Anypoint Exchange](http://www.mulesoft.org/documentation/display/current/Anypoint+Exchange).
+	**Note:** To find out the correct *sfdc.a.integration.user.id* value, please, refer to example project **Salesforce Data Retrieval** in [Anypoint Exchange](http://www.mulesoft.org/documentation/display/current/Anypoint+Exchange).
 
 **SalesForce Connector configuration for company B**
 
@@ -171,7 +171,7 @@ This property is an important one, as it configures what should be the start poi
 + sfdc.b.url `https://login.salesforce.com/services/Soap/u/32.0`
 + sfdc.b.integration.user.id `B0ed000BO9T`
 
-	**Note:** To find out the correct *sfdc.integration.user.id* value, please, refer to example project **Salesforce Data Retrieval** in [Anypoint Exchange](http://www.mulesoft.org/documentation/display/current/Anypoint+Exchange).
+	**Note:** To find out the correct *sfdc.b.integration.user.id* value, please, refer to example project **Salesforce Data Retrieval** in [Anypoint Exchange](http://www.mulesoft.org/documentation/display/current/Anypoint+Exchange).
 
 **Some points to consider about configuration properties**
 
