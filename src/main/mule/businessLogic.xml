@@ -20,7 +20,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 			<batch:process-records>
 				<batch:step name="forEachContactInAGetContactInBStep" doc:id="89713774-362a-4e92-9bdc-41e31802bf38">
 					<salesforce:query-single config-ref="Salesforce_Sfdc_B_config" doc:name="Query Contact in Salesforce instance B" doc:id="e828fbe5-8917-4833-a479-8df69b560884" target="IdDateInB">
-						<salesforce:salesforce-query>SELECT Id, FirstName, LastName, Email, LastModifiedDate FROM Contact WHERE Email = ':email'</salesforce:salesforce-query>
+						<salesforce:salesforce-query>SELECT Id, FirstName, LastName, Email, LastModifiedDate, Description FROM Contact WHERE Email = ':email'</salesforce:salesforce-query>
 						<salesforce:parameters><![CDATA[#[output applicaton/java
 ---
 {
@@ -136,7 +136,7 @@ payload map
 			<batch:process-records>
 				<batch:step name="forEachContactInBGetContactInAStep" doc:id="89713774-362a-4e92-9bdc-41e31802bf38">
 					<salesforce:query-single config-ref="Salesforce_Sfdc_A_config" doc:name="Query Contact in Salesforce instance A" doc:id="e828fbe5-8917-4833-a479-8df69b560884" target="IdDateInA">
-						<salesforce:salesforce-query>SELECT Id, FirstName, LastName, Email, LastModifiedDate FROM Contact WHERE Email = ':email'</salesforce:salesforce-query>
+						<salesforce:salesforce-query>SELECT Id, FirstName, LastName, Email, LastModifiedDate, Description FROM Contact WHERE Email = ':email'</salesforce:salesforce-query>
 						<salesforce:parameters><![CDATA[#[output applicaton/java
 ---
 {
