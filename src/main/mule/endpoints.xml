@@ -39,9 +39,6 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 			
 
 </when>
-			<when expression="#[vars.syncState == 'error']" >
-				<logger level="INFO" doc:name="Error response" doc:id="ef8679aa-8569-45e7-a3ec-58a665347807" message="Error: Contacts are not possible to synchronize. Please check your error message and logs"/>
-			</when>
 			<otherwise>
 				<logger level="INFO" doc:name="Batch running" doc:id="bf955eec-4baf-4836-b7fd-7d77ff5ebcb1" message="Batch running" />
 
@@ -56,10 +53,10 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 	</flow>
 		<flow name="sfdcQueryFlowA">
 		<os:retrieve key="watermark" objectStore="watermarkStoreA" target="lastQueryDateA" doc:name="Retrieve lastQueryDateA">
-        <os:default-value><![CDATA[${watermark.default.expression}]]></os:default-value>
+        <os:default-value><![CDATA[#[${watermark.default.expression}]]]></os:default-value>
     </os:retrieve>
     <salesforce:query config-ref="Salesforce_Sfdc_A_config" doc:name="Query Contact with filtering criteria from Salesforce Instance A">
-		<salesforce:salesforce-query>SELECT Account.Id, Account.Name, Account.Description, Account.Industry, Account.NumberOfEmployees, Email,FirstName, LastModifiedById, LastModifiedDate, LastName, MailingCountry, Title  FROM Contact  WHERE LastModifiedDate &gt; :lastModifiedDate AND Email &lt;&gt; null AND LastModifiedById &lt;&gt; '${sfdc.a.integration.user.id}' ORDER BY LastModifiedDate ASC LIMIT 200</salesforce:salesforce-query>
+		<salesforce:salesforce-query>SELECT Account.Id, Account.Name, Account.Description, Account.Industry, Account.NumberOfEmployees, Email,FirstName, LastModifiedById, LastModifiedDate, LastName, MailingCountry, Title, Description  FROM Contact  WHERE LastModifiedDate &gt; :lastModifiedDate AND Email &lt;&gt; null AND LastModifiedById &lt;&gt; '${sfdc.a.integration.user.id}' ORDER BY LastModifiedDate ASC LIMIT 200</salesforce:salesforce-query>
 		<salesforce:parameters><![CDATA[#[output applicaton/java
 ---
 {
@@ -72,10 +69,10 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 </flow>
 <flow name="sfdcQueryFlowB">
 		<os:retrieve key="watermark" objectStore="watermarkStoreB" target="lastQueryDateB" doc:name="Retrieve lastQueryDateB">
-        <os:default-value><![CDATA[${watermark.default.expression}]]></os:default-value>
+        <os:default-value><![CDATA[#[${watermark.default.expression}]]]></os:default-value>
     </os:retrieve>
     <salesforce:query config-ref="Salesforce_Sfdc_B_config" doc:name="Query Contact with filtering criteria from Salesforce Instance B">
-		<salesforce:salesforce-query>SELECT Account.Id, Account.Name, Account.Description, Account.Industry, Account.NumberOfEmployees, Email,FirstName, LastModifiedById, LastModifiedDate, LastName, MailingCountry, Title  FROM Contact  WHERE LastModifiedDate &gt; :lastModifiedDate AND Email &lt;&gt; null AND LastModifiedById &lt;&gt; '${sfdc.b.integration.user.id}' ORDER BY LastModifiedDate ASC LIMIT 200</salesforce:salesforce-query>
+		<salesforce:salesforce-query>SELECT Account.Id, Account.Name, Account.Description, Account.Industry, Account.NumberOfEmployees, Email,FirstName, LastModifiedById, LastModifiedDate, LastName, MailingCountry, Title, Description  FROM Contact  WHERE LastModifiedDate &gt; :lastModifiedDate AND Email &lt;&gt; null AND LastModifiedById &lt;&gt; '${sfdc.b.integration.user.id}' ORDER BY LastModifiedDate ASC LIMIT 200</salesforce:salesforce-query>
 		<salesforce:parameters><![CDATA[#[output applicaton/java
 ---
 {
