@@ -15,4 +15,4 @@
 	<os:object-store name="watermarkStoreA" persistent="false" doc:name="Object store" />
 	<os:object-store name="watermarkStoreB" persistent="false" doc:name="Object store" />
 	
-<global-property doc:name="Global Property" name="mule.env" value="dev" /></mule>
+<global-property name="mule.env" value="dev" doc:name="Global Property" /></mule>
