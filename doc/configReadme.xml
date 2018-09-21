@@ -8,10 +8,10 @@
 As a Salesforce administrator I want to have my contacts synchronized between two different Salesforce organizations.
 
 This template serves as a foundation for setting an online bidirectional sync of contacts between 
-two SalesForce instances, and being able to specify filtering criterias. 
+two Salesforce instances, and being able to specify filtering criteria. 
 
 The  main behavior for the integration is polling for changes in new contacts or modified ones using the scheduler 
-component. The polled changes are for those that have occurred in any of the Salesforces instances during a  
+component. The polled changes are for those that have occurred in any of the Salesforce instances during a  
 defined period of time. For those contacts that have not been updated yet, the integration triggers an 
 upsert (update or create depending the case) taking the last modification as the one that should be applied.
 
