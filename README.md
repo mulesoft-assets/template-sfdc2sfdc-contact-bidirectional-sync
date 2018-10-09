@@ -1,6 +1,18 @@
 
 # Anypoint Template: Salesforce to Salesforce Contact Bidirectional Synchronization
 
+Bi-directionally synchronizes contact data between two Salesforce organizations. This template makes it fast to configure the fields to synchronize, how they map, and criteria on when to trigger the synchronization. 
+
+Parent accounts are created if they don’t already exist in the destination org, or this template can be configured to link all contact created to a specific account. This template can trigger either using the Mule polling mechanism or can be easily modified to work with Salesforce outbound messaging to better utilize Salesforce API calls. 
+
+This template leverages watermarking functionality to ensure that only the most recent items are synchronized and batch to effectively process many records at a time.
+
+![8eefeb6f-6ba6-4dd6-ba26-9fcccec37580-image.png](https://exchange2-file-upload-service-kprod.s3.us-east-1.amazonaws.com:443/8eefeb6f-6ba6-4dd6-ba26-9fcccec37580-image.png)
+
+[//]: # (![]\(https://www.youtube.com/embed/uLqkiUtIFF0?wmode=transparent\)
+
+[![YouTube Video](http://img.youtube.com/vi/uLqkiUtIFF0/0.jpg)](https://www.youtube.com/watch?v=uLqkiUtIFF0)
+
 # License Agreement
 This template is subject to the conditions of the 
 <a href="https://s3.amazonaws.com/templates-examples/AnypointTemplateLicense.pdf">MuleSoft License Agreement</a>.
