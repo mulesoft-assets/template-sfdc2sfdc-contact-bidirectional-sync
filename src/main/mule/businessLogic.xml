@@ -15,11 +15,11 @@ http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/ba
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
 http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
 
-<flow name="fromSalesforceAtoSalesforceB" doc:id="d617bfbe-587a-4485-b933-215251bb9109" >
-		<batch:job jobName="fromSalesforceAtoSalesforceBBatch" doc:id="204892ae-0d97-4326-beae-310c8d52b7a6">
+<flow name="fromSalesforceAtoSalesforceB" doc:id="ed5173a3-b590-4ed0-9f66-36a3fd5bd430" >
+		<batch:job jobName="fromSalesforceAtoSalesforceBBatch" doc:id="9cea0c9f-f92b-4085-888f-138d236ebeec">
 			<batch:process-records>
-				<batch:step name="forEachContactInAGetContactInBStep" doc:id="89713774-362a-4e92-9bdc-41e31802bf38">
-					<salesforce:query-single config-ref="Salesforce_Sfdc_B_config" doc:name="Query Contact in Salesforce instance B" doc:id="e828fbe5-8917-4833-a479-8df69b560884" target="IdDateInB">
+				<batch:step name="forEachContactInAGetContactInBStep" doc:id="5af136b1-cfe4-43fe-a92a-a6e3b9ae06a1">
+					<salesforce:query-single config-ref="Salesforce_Sfdc_B_config" doc:name="Query Contact in Salesforce instance B" doc:id="cf1126a5-a733-4407-b4a4-70547b2eb405" target="IdDateInB">
 						<salesforce:salesforce-query>SELECT Id, FirstName, LastName, Email, LastModifiedDate, Description FROM Contact WHERE Email = ':email'</salesforce:salesforce-query>
 						<salesforce:parameters><![CDATA[#[output applicaton/java
 ---
@@ -27,7 +27,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 	"email" : payload.Email
 }]]]></salesforce:parameters>
 					</salesforce:query-single>
-					<ee:transform doc:name="set Id and LastModifiedDate from matching account" doc:id="c119f87d-9095-4962-b961-efe507b06a0c">
+					<ee:transform doc:name="set Id and LastModifiedDate from matching account" doc:id="d5d75c6b-56d7-417e-9306-17e8f2e69c21">
 						<ee:message>
 							<ee:set-payload><![CDATA[%dw 2.0
 output application/java
@@ -39,8 +39,8 @@ payload ++ {
 						</ee:message>
 					</ee:transform>
 				</batch:step>
-				<batch:step name="findOrCreateAccountInBStep" doc:id="acaea295-d3c0-46b5-b869-e3e59b429110" acceptExpression='#["${account.sync.policy}" == "syncAccount" and payload.Account != null]'>
-					<salesforce:query-single config-ref="Salesforce_Sfdc_B_config" doc:name="Query account in Salesforce B" doc:id="e3e41eb8-00b9-47bd-9717-e1513e6a79b1" target="accountId">
+				<batch:step name="findOrCreateAccountInBStep" doc:id="992f4b2d-70a8-49bd-96c3-2e1f19619b39" acceptExpression='#["${account.sync.policy}" == "syncAccount" and payload.Account != null]'>
+					<salesforce:query-single config-ref="Salesforce_Sfdc_B_config" doc:name="Query account in Salesforce B" doc:id="a0b909ce-774a-4351-a739-cce8a8460174" target="accountId">
 						<salesforce:salesforce-query>SELECT Id FROM Account WHERE Name = ':name'</salesforce:salesforce-query>
 						<salesforce:parameters><![CDATA[#[output applicaton/java
 ---
@@ -48,7 +48,7 @@ payload ++ {
 	"name" : payload.Account.Name
 }]]]></salesforce:parameters>
 					</salesforce:query-single>
-					<ee:transform doc:name="Save record payload" doc:id="a6285fc1-69c9-4034-8baf-6a60e6041938" >
+					<ee:transform doc:name="Save record payload" doc:id="2d581c7c-4921-436f-af9c-5ac6989e3d66" >
 						<ee:message >
 						</ee:message>
 						<ee:variables >
@@ -59,9 +59,9 @@ payload ++ {AccountId : vars.accountId.Id}]]></ee:set-variable>
 							
 						</ee:variables>
 					</ee:transform>
-					<choice doc:name="Should be a new Account created?" doc:id="61765808-c8cf-4bb8-8dcb-ab1dd601010e" >
+					<choice doc:name="Should be a new Account created?" doc:id="a0f101c6-8f5e-4c17-bcb3-bb4c4e92fcc8" >
 						<when expression="#[vars.accountId.Id == null]" >
-							<ee:transform doc:name="prepare Account for insert" doc:id="81cf7def-04bc-4039-b3d3-d87c534c6377">
+							<ee:transform doc:name="prepare Account for insert" doc:id="e72ee4ac-bc40-44c4-9ef0-e6d15c9c51a0">
 								<ee:message>
 									<ee:set-payload><![CDATA[%dw 2.0
 output application/java
@@ -75,8 +75,8 @@ output application/java
 }]]></ee:set-payload>
 								</ee:message>
 							</ee:transform>
-							<salesforce:create-single config-ref="Salesforce_Sfdc_B_config" type="Account" doc:name="create Account in Salesforce Instance B" doc:id="c6e32c91-cecd-4831-a08f-af616eb20f0e" />
-							<ee:transform doc:name="Push Id to record payload" doc:id="592c3f5d-8216-4f91-bd9d-285d17688559" >
+							<salesforce:create-single config-ref="Salesforce_Sfdc_B_config" type="Account" doc:name="create Account in Salesforce Instance B" doc:id="830176cf-c87e-46d4-a1be-33cc88a5a9ce" />
+							<ee:transform doc:name="Push Id to record payload" doc:id="c013e0f1-2c83-407a-a93a-835c0b4c468c" >
 								<ee:message >
 									<ee:set-payload ><![CDATA[%dw 2.0
 output application/java
@@ -86,8 +86,8 @@ vars.recordPayload ++ { AccountId : payload.Id }]]></ee:set-payload>
 							</ee:transform>
 						</when>
 						<otherwise >
-							<logger level="INFO" doc:name="Log - Existing Account Id already set!" doc:id="8388541c-b000-4c8e-be6e-1fcb7053bbae" message="Log - Existing Account Id already set!"/>
-							<ee:transform doc:name="record payload" doc:id="1473cc46-f3e5-418f-97d4-26c6d6a3f28c" >
+							<logger level="INFO" doc:name="Log - Existing Account Id already set!" doc:id="de89e043-54b5-48fc-aa8d-45071f852804" message="Log - Existing Account Id already set!"/>
+							<ee:transform doc:name="record payload" doc:id="5ab6f9ca-e890-4bc1-a7cc-40975bb11ecb" >
 								<ee:message >
 									<ee:set-payload ><![CDATA[%dw 2.0
 output application/java
@@ -98,9 +98,9 @@ vars.recordPayload]]></ee:set-payload>
 						</otherwise>
 					</choice>
 				</batch:step>
-				<batch:step name="forEachAccountToBeUpsertedInSalesforceB" doc:id="78a74ab4-9b91-416d-985a-acda2ac377eb" acceptExpression="#[payload.Id == null  or (payload.LastModifiedDateB &lt; payload.LastModifiedDate)]">
-					<batch:aggregator doc:name="Batch Aggregator" doc:id="1ad86a98-643e-494a-a90a-32daab0b03cc" size="${page.size}">
-						<ee:transform doc:name="prepare Contacts for upsert" doc:id="d484063f-6d81-42ce-98ef-7cec51b04672">
+				<batch:step name="forEachAccountToBeUpsertedInSalesforceB" doc:id="0ab21090-2eed-4cc8-8068-766b1dac1cf2" acceptExpression="#[payload.Id == null  or (payload.LastModifiedDateB &lt; payload.LastModifiedDate)]">
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="2eccac91-4205-412a-aefe-04bb558ab024" size="${page.size}">
+						<ee:transform doc:name="prepare Contacts for upsert" doc:id="9e5f7cc1-ffa9-43f9-b805-8208739c82f0">
 							<ee:message>
 								<ee:set-payload><![CDATA[%dw 2.0
 output application/java
@@ -118,24 +118,24 @@ payload map
 }]]></ee:set-payload>
 							</ee:message>
 						</ee:transform>
-						<salesforce:upsert-bulk config-ref="Salesforce_Sfdc_B_config" type="Contact" externalIdFieldName="Id" doc:name="Upsert bulk - Contacts in Salesforce instance B" doc:id="26dee78b-3cbd-41d7-a260-538058420b0e" />
-						<logger level="INFO" doc:name="Log response" doc:id="fbeb42b3-b5c3-44f0-addd-4ca9788f97f0" message="Upsert Salesforce B response: #[payload]"/>
+						<salesforce:upsert-bulk config-ref="Salesforce_Sfdc_B_config" type="Contact" externalIdFieldName="Id" doc:name="Upsert bulk - Contacts in Salesforce instance B" doc:id="1372462c-455e-4f30-b4ab-e21ef133291c" />
+						<logger level="INFO" doc:name="Log response" doc:id="1fe02deb-d53e-48cb-ac47-e72b8aae0a7f" message="Upsert Salesforce B response: #[output application/json --- payload]"/>
 					</batch:aggregator>
 				</batch:step>
 			</batch:process-records>
 			<batch:on-complete >
-				<os:store key="syncState" doc:name="Set sync state to fromB" doc:id="f08de372-2fb9-4aef-80ca-f6da2241fc75" objectStore="SchedulerStatus">
+				<os:store key="syncState" doc:name="Set sync state to fromB" doc:id="2b64c590-eeed-43f3-b2b1-49d3b8bb4226" objectStore="SchedulerStatus">
 					<os:value><![CDATA[fromB]]></os:value>
 				</os:store>
 			</batch:on-complete>
 		
 </batch:job>
 	</flow>
-	<flow name="fromSalesforceBtoSalesforceA" doc:id="8759532e-79b7-4789-990c-dc8e162bfd67" >
-		<batch:job jobName="fromSalesforceBtoSalesforceABatch" doc:id="204892ae-0d97-4326-beae-310c8d52b7a6">
+	<flow name="fromSalesforceBtoSalesforceA" doc:id="990bd68b-2aa7-49ed-a042-9f53191e53e3" >
+		<batch:job jobName="fromSalesforceBtoSalesforceABatch" doc:id="76eafd4d-4a08-45c7-83a0-17b82da8960a">
 			<batch:process-records>
-				<batch:step name="forEachContactInBGetContactInAStep" doc:id="89713774-362a-4e92-9bdc-41e31802bf38">
-					<salesforce:query-single config-ref="Salesforce_Sfdc_A_config" doc:name="Query Contact in Salesforce instance A" doc:id="e828fbe5-8917-4833-a479-8df69b560884" target="IdDateInA">
+				<batch:step name="forEachContactInBGetContactInAStep" doc:id="713b19d1-7f69-46c5-a2c3-9067eec52421">
+					<salesforce:query-single config-ref="Salesforce_Sfdc_A_config" doc:name="Query Contact in Salesforce instance A" doc:id="3b14aab5-328a-45f1-9732-0f00a80d1aaf" target="IdDateInA">
 						<salesforce:salesforce-query>SELECT Id, FirstName, LastName, Email, LastModifiedDate, Description FROM Contact WHERE Email = ':email'</salesforce:salesforce-query>
 						<salesforce:parameters><![CDATA[#[output applicaton/java
 ---
@@ -143,7 +143,7 @@ payload map
 	"email" : payload.Email
 }]]]></salesforce:parameters>
 					</salesforce:query-single>
-					<ee:transform doc:name="set Id and LastModifiedDate from matching account" doc:id="c119f87d-9095-4962-b961-efe507b06a0c">
+					<ee:transform doc:name="set Id and LastModifiedDate from matching account" doc:id="0a2b84b1-5d43-4583-b771-a1ba30ef33f1">
 						<ee:message>
 							<ee:set-payload><![CDATA[%dw 2.0
 output application/java
@@ -155,8 +155,8 @@ payload ++ {
 						</ee:message>
 					</ee:transform>
 				</batch:step>
-				<batch:step name="findOrCreateAccountInAStep" doc:id="acaea295-d3c0-46b5-b869-e3e59b429110" acceptExpression='#["${account.sync.policy}" == "syncAccount" and payload.Account != null]'>
-					<salesforce:query-single config-ref="Salesforce_Sfdc_A_config" doc:name="Query account in Salesforce A" doc:id="e3e41eb8-00b9-47bd-9717-e1513e6a79b1" target="accountId">
+				<batch:step name="findOrCreateAccountInAStep" doc:id="3e1ab5e1-8cef-4799-b6b8-f99953d036da" acceptExpression='#["${account.sync.policy}" == "syncAccount" and payload.Account != null]'>
+					<salesforce:query-single config-ref="Salesforce_Sfdc_A_config" doc:name="Query account in Salesforce A" doc:id="445a37a9-d964-4b95-acb5-125f6fe73855" target="accountId">
 						<salesforce:salesforce-query>SELECT Id FROM Account WHERE Name = ':name'</salesforce:salesforce-query>
 						<salesforce:parameters><![CDATA[#[output applicaton/java
 ---
@@ -164,7 +164,7 @@ payload ++ {
 	"name" : payload.Account.Name
 }]]]></salesforce:parameters>
 					</salesforce:query-single>
-					<ee:transform doc:name="Save record payload" doc:id="a6285fc1-69c9-4034-8baf-6a60e6041938" >
+					<ee:transform doc:name="Save record payload" doc:id="86053264-3b66-4ef7-a45d-b05342e1aae8" >
 						<ee:message >
 						</ee:message>
 						<ee:variables >
@@ -175,9 +175,9 @@ payload ++ {AccountId : vars.accountId.Id}]]></ee:set-variable>
 							
 						</ee:variables>
 					</ee:transform>
-					<choice doc:name="Should be a new Account created?" doc:id="61765808-c8cf-4bb8-8dcb-ab1dd601010e" >
+					<choice doc:name="Should be a new Account created?" doc:id="1ac5bfa4-1a59-4bb4-9c9b-67e61ee8711a" >
 						<when expression="#[vars.accountId.Id == null]" >
-							<ee:transform doc:name="prepare Account for insert" doc:id="81cf7def-04bc-4039-b3d3-d87c534c6377">
+							<ee:transform doc:name="prepare Account for insert" doc:id="38ef97c6-db6c-4a22-b4e0-c80d048be2e5">
 								<ee:message>
 									<ee:set-payload><![CDATA[%dw 2.0
 output application/java
@@ -191,8 +191,8 @@ output application/java
 }]]></ee:set-payload>
 								</ee:message>
 							</ee:transform>
-							<salesforce:create-single config-ref="Salesforce_Sfdc_A_config" doc:name="create Account in Salesforce Instance A" doc:id="c6e32c91-cecd-4831-a08f-af616eb20f0e" type="Account"/>
-							<ee:transform doc:name="Push Id to record payload" doc:id="592c3f5d-8216-4f91-bd9d-285d17688559" >
+							<salesforce:create-single config-ref="Salesforce_Sfdc_A_config" doc:name="create Account in Salesforce Instance A" doc:id="ecf58013-a8c3-4852-92d8-324c0a33f328" type="Account"/>
+							<ee:transform doc:name="Push Id to record payload" doc:id="7397e2e4-d7ac-446b-95a3-954ec7ff9f09" >
 								<ee:message >
 									<ee:set-payload ><![CDATA[%dw 2.0
 output application/java
@@ -202,8 +202,8 @@ vars.recordPayload ++ { AccountId : payload.Id }]]></ee:set-payload>
 							</ee:transform>
 						</when>
 						<otherwise >
-							<logger level="INFO" doc:name="Log - Existing Account Id already set!" doc:id="8388541c-b000-4c8e-be6e-1fcb7053bbae" message="Log - Existing Account Id already set!"/>
-							<ee:transform doc:name="record payload" doc:id="1473cc46-f3e5-418f-97d4-26c6d6a3f28c" >
+							<logger level="INFO" doc:name="Log - Existing Account Id already set!" doc:id="1c7ac61d-e0b7-4b68-b17f-7eb68d8e8e22" message="Log - Existing Account Id already set!"/>
+							<ee:transform doc:name="record payload" doc:id="cfd69926-45d9-4c79-8fb2-5e0c34f6d60f" >
 								<ee:message >
 									<ee:set-payload ><![CDATA[%dw 2.0
 output application/java
@@ -214,9 +214,9 @@ vars.recordPayload]]></ee:set-payload>
 						</otherwise>
 					</choice>
 				</batch:step>
-				<batch:step name="forEachContactThatShouldBeUpsertedInA" doc:id="78a74ab4-9b91-416d-985a-acda2ac377eb" acceptExpression="'payload.Id == null  or (payload.LastModifiedDateA &lt; payload.LastModifiedDate)'">
-					<batch:aggregator doc:name="Batch Aggregator" doc:id="1ad86a98-643e-494a-a90a-32daab0b03cc" size="${page.size}">
-						<ee:transform doc:name="prepare Contacts for upsert" doc:id="d484063f-6d81-42ce-98ef-7cec51b04672">
+				<batch:step name="forEachContactThatShouldBeUpsertedInA" doc:id="b6975232-2cb7-4070-a4cc-b3bbf930ef44" acceptExpression="'payload.Id == null  or (payload.LastModifiedDateA &lt; payload.LastModifiedDate)'">
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="db7bc0ec-8196-4eb8-98dc-1ba7fa55b71d" size="${page.size}">
+						<ee:transform doc:name="prepare Contacts for upsert" doc:id="eaaa7a9e-5369-40c8-9719-509be0555fc2">
 							<ee:message>
 								<ee:set-payload><![CDATA[%dw 2.0
 output application/java
@@ -234,13 +234,13 @@ payload map
 }]]></ee:set-payload>
 							</ee:message>
 						</ee:transform>
-						<salesforce:upsert-bulk config-ref="Salesforce_Sfdc_A_config" type="Contact" externalIdFieldName="Id" doc:name="Upsert bulk - Contacts in Salesforce instance A" doc:id="26dee78b-3cbd-41d7-a260-538058420b0e" />
-						<logger level="INFO" doc:name="Log response" doc:id="fbeb42b3-b5c3-44f0-addd-4ca9788f97f0" message="Upsert Salesforce A response: #[payload]"/>
+						<salesforce:upsert-bulk config-ref="Salesforce_Sfdc_A_config" type="Contact" externalIdFieldName="Id" doc:name="Upsert bulk - Contacts in Salesforce instance A" doc:id="061b81cc-aeb7-444b-bb6a-7486519f0c0c" />
+						<logger level="INFO" doc:name="Log response" doc:id="7702ae5d-908b-4cf6-8796-ad520eacf9a9" message="Upsert Salesforce A response: #[output application/json --- payload]"/>
 					</batch:aggregator>
 				</batch:step>
 			</batch:process-records>
 			<batch:on-complete >
-				<os:store key="syncState" doc:name="Set sync state to fromA" doc:id="f08de372-2fb9-4aef-80ca-f6da2241fc75" objectStore="SchedulerStatus">
+				<os:store key="syncState" doc:name="Set sync state to fromA" doc:id="5d0716ee-27e8-44d7-8ff6-2cdae0f532d3" objectStore="SchedulerStatus">
 					<os:value><![CDATA[fromA]]></os:value>
 				</os:store>
 			</batch:on-complete>
