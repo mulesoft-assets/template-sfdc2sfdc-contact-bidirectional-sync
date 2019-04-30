@@ -119,7 +119,6 @@ payload map
 							</ee:message>
 						</ee:transform>
 						<salesforce:upsert-bulk config-ref="Salesforce_Sfdc_B_config" type="Contact" externalIdFieldName="Id" doc:name="Upsert bulk - Contacts in Salesforce instance B" doc:id="1372462c-455e-4f30-b4ab-e21ef133291c" />
-						<logger level="INFO" doc:name="Log response" doc:id="1fe02deb-d53e-48cb-ac47-e72b8aae0a7f" message="Upsert Salesforce B response: #[output application/json --- payload]"/>
 					</batch:aggregator>
 				</batch:step>
 			</batch:process-records>
@@ -235,7 +234,6 @@ payload map
 							</ee:message>
 						</ee:transform>
 						<salesforce:upsert-bulk config-ref="Salesforce_Sfdc_A_config" type="Contact" externalIdFieldName="Id" doc:name="Upsert bulk - Contacts in Salesforce instance A" doc:id="061b81cc-aeb7-444b-bb6a-7486519f0c0c" />
-						<logger level="INFO" doc:name="Log response" doc:id="7702ae5d-908b-4cf6-8796-ad520eacf9a9" message="Upsert Salesforce A response: #[output application/json --- payload]"/>
 					</batch:aggregator>
 				</batch:step>
 			</batch:process-records>
