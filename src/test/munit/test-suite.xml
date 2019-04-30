@@ -176,7 +176,7 @@ output application/java
 				atLeast="1">
 				<munit-tools:with-attributes>
 					<munit-tools:with-attribute
-						attributeName="doc:id" whereValue="c119f87d-9095-4962-b961-efe507b06a0c" />
+						attributeName="doc:id" whereValue="d5d75c6b-56d7-417e-9306-17e8f2e69c21" />
 				</munit-tools:with-attributes>
 			</munit-tools:verify-call>
 		</munit:validation>
@@ -239,7 +239,7 @@ output application/java
 				atLeast="1">
 				<munit-tools:with-attributes>
 					<munit-tools:with-attribute
-						attributeName="doc:id" whereValue="c119f87d-9095-4962-b961-efe507b06a0c" />
+						attributeName="doc:id" whereValue="0a2b84b1-5d43-4583-b771-a1ba30ef33f1" />
 				</munit-tools:with-attributes>
 			</munit-tools:verify-call>
 		</munit:validation>
