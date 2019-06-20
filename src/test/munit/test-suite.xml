@@ -146,7 +146,7 @@ output application/java
 			</salesforce:query>
 			<munit-tools:assert-that doc:name="Assert that description was not updated"
 				doc:id="1e559409-a86b-47b9-bb44-cbcac54c4ade" expression="#[payload[0].Description]"
-				is='#[MunitTools::equalTo(vars.correctTestDescription)]' />
+				is='#[MunitTools::equalTo(vars.correctTestDescription)]' message="Assert that description was not updated has failed"/>
 			<salesforce:query
 				doc:name="Query for Contact which should be inserted to instance B"
 				doc:id="145cdbc1-3137-4eef-b8e3-7aea91cb9833" config-ref="Salesforce_Sfdc_B_config">
@@ -161,7 +161,7 @@ output application/java
 			</salesforce:query>
 			<munit-tools:assert-that doc:name="Assert that we found migrated Contact"
 				doc:id="a8f4453a-10c6-4508-8ecf-64cc08e6129c" expression="#[sizeOf(payload)]"
-				is="#[MunitTools::equalTo(1)]" />
+				is="#[MunitTools::equalTo(1)]" message="Assert that we found migrated Contact has failed"/>
 			<salesforce:delete doc:name="Delete migrated Contacts from B"
 				doc:id="353f9ea2-b733-4370-9d93-a97ee651f5e4" config-ref="Salesforce_Sfdc_B_config">
 				<salesforce:delete-ids><![CDATA[#[payload map ($.Id)]]]></salesforce:delete-ids>
@@ -209,7 +209,7 @@ output application/java
 			</salesforce:query>
 			<munit-tools:assert-that doc:name="Assert that description was updated"
 				doc:id="1e559409-a86b-47b9-bb44-cbcac54c4ade" expression="#[payload[0].Description]"
-				is='#[MunitTools::equalTo(vars.correctTestDescription)]' />
+				is='#[MunitTools::equalTo(vars.correctTestDescription)]' message="Assert that description was updated has failed"/>
 			<salesforce:query
 				doc:name="Query for Contact which should be inserted to instance A"
 				doc:id="145cdbc1-3137-4eef-b8e3-7aea91cb9833" config-ref="Salesforce_Sfdc_A_config">
@@ -224,7 +224,7 @@ output application/java
 			</salesforce:query>
 			<munit-tools:assert-that doc:name="Assert that we found migrated Contact"
 				doc:id="a8f4453a-10c6-4508-8ecf-64cc08e6129c" expression="#[sizeOf(payload)]"
-				is="#[MunitTools::equalTo(1)]" />
+				is="#[MunitTools::equalTo(1)]" message="Assert that we found migrated Contact has failed"/>
 			<salesforce:delete doc:name="Delete migrated Contacts from A"
 				doc:id="353f9ea2-b733-4370-9d93-a97ee651f5e4" config-ref="Salesforce_Sfdc_A_config">
 				<salesforce:delete-ids><![CDATA[#[payload map ($.Id)]]]></salesforce:delete-ids>
