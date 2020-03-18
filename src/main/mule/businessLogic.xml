@@ -197,7 +197,7 @@ output application/java
 }]]></ee:set-payload>
 								</ee:message>
 							</ee:transform>
-							<salesforce:create-single config-ref="Salesforce_Sfdc_A_config" doc:name="create Account in Salesforce Instance A" doc:id="ecf58013-a8c3-4852-92d8-324c0a33f328" type="Account"/>
+							<salesforce:create config-ref="Salesforce_Sfdc_A_config" doc:name="create Account in Salesforce Instance A" doc:id="ecf58013-a8c3-4852-92d8-324c0a33f328" type="Account"/>
 							<ee:transform doc:name="Push Id to record payload" doc:id="7397e2e4-d7ac-446b-95a3-954ec7ff9f09" >
 								<ee:message >
 									<ee:set-payload ><![CDATA[%dw 2.0
