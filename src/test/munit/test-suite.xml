@@ -86,7 +86,7 @@ output application/java
 		</ee:transform>
 		<salesforce:create type="Contact"
 			doc:name="Create Contacts in instance A" config-ref="Salesforce_Sfdc_A_test_config" />
-		<set-variable value="#[payload map ($.id)]" doc:name="Store IDs to variable sfdcAIds"
+		<set-variable value="#[payload.items map ($.id)]" doc:name="Store IDs to variable sfdcAIds"
 			variableName="sfdcAIds" />
 		<ee:transform doc:name="Prepare testing data(instance B)"
 			doc:id="8ce6e8a6-55fb-41d6-85b2-38d8f89b33ce">
@@ -115,7 +115,7 @@ output application/java
 		</ee:transform>
 		<salesforce:create doc:name="Create Contacts in instance B"
 			config-ref="Salesforce_Sfdc_B_test_config" type="Contact" />
-		<set-variable value="#[payload map ($.id)]" doc:name="Store IDs to variable sfdcBIds"
+		<set-variable value="#[payload.items map ($.id)]" doc:name="Store IDs to variable sfdcBIds"
 			variableName="sfdcBIds" />
 	</munit:before-test>
 	<munit:test name="test-suite-sfdcQueryFlowATest"
@@ -164,13 +164,10 @@ output application/java
 				is="#[MunitTools::equalTo(1)]" message="Assert that we found migrated Contact has failed"/>
 			<salesforce:delete doc:name="Delete migrated Contacts from B"
 				doc:id="353f9ea2-b733-4370-9d93-a97ee651f5e4" config-ref="Salesforce_Sfdc_B_config">
-				<salesforce:delete-ids><![CDATA[#[payload map ($.Id)]]]></salesforce:delete-ids>
+				<salesforce:ids><![CDATA[#[payload map ($.Id)]]]></salesforce:ids>
 			</salesforce:delete>
 		</munit:execution>
 		<munit:validation>
-			<munit-tools:verify-call doc:name="Verify upsert call"
-				doc:id="d169a8c9-05fa-410f-bf1f-679ac50991ea" processor="salesforce:upsert-bulk"
-				times="1" />
 			<munit-tools:verify-call doc:name="Verify transform call"
 				doc:id="6615e195-e10d-4e56-8116-3ab61227a26c" processor="ee:transform"
 				atLeast="1">
@@ -227,13 +224,10 @@ output application/java
 				is="#[MunitTools::equalTo(1)]" message="Assert that we found migrated Contact has failed"/>
 			<salesforce:delete doc:name="Delete migrated Contacts from A"
 				doc:id="353f9ea2-b733-4370-9d93-a97ee651f5e4" config-ref="Salesforce_Sfdc_A_config">
-				<salesforce:delete-ids><![CDATA[#[payload map ($.Id)]]]></salesforce:delete-ids>
+				<salesforce:ids><![CDATA[#[payload map ($.Id)]]]></salesforce:ids>
 			</salesforce:delete>
 		</munit:execution>
 		<munit:validation>
-			<munit-tools:verify-call doc:name="Verify upsert call"
-				doc:id="d169a8c9-05fa-410f-bf1f-679ac50991ea" processor="salesforce:upsert-bulk"
-				times="1" />
 			<munit-tools:verify-call doc:name="Verify transform call"
 				doc:id="6615e195-e10d-4e56-8116-3ab61227a26c" processor="ee:transform"
 				atLeast="1">
@@ -249,11 +243,11 @@ output application/java
 		description="After tests actions" doc:id="5b85bb9e-67e6-47f7-8f71-53a39f147fc8">
 		<salesforce:delete doc:name="Delete source Contacts in instance A"
 			doc:id="788956ca-8ada-49c2-a3f7-7eb367e735b4" config-ref="Salesforce_Sfdc_A_test_config">
-			<salesforce:delete-ids><![CDATA[#[vars.sfdcAIds]]]></salesforce:delete-ids>
+			<salesforce:ids><![CDATA[#[vars.sfdcAIds]]]></salesforce:ids>
 		</salesforce:delete>
 		<salesforce:delete doc:name="Delete source Contacts in instance B"
 			doc:id="efc382cb-21e8-4b7e-9e97-586fc405987f" config-ref="Salesforce_Sfdc_B_test_config">
-			<salesforce:delete-ids><![CDATA[#[vars.sfdcBIds]]]></salesforce:delete-ids>
+			<salesforce:ids><![CDATA[#[vars.sfdcBIds]]]></salesforce:ids>
 		</salesforce:delete>
 
 
