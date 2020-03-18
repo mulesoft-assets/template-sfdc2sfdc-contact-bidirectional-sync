@@ -149,14 +149,14 @@ payload map
 	"email" : payload.Email
 }]]]></salesforce:parameters>
 					</salesforce:query>
-					<ee:transform doc:name="set Id and LastModifiedDate from matching account" doc:id="0a2b84b1-5d43-4583-b771-a1ba30ef33f1">
+                    <ee:transform doc:name="set Id and LastModifiedDate from matching account" doc:id="0a2b84b1-5d43-4583-b771-a1ba30ef33f1">
 						<ee:message>
 							<ee:set-payload><![CDATA[%dw 2.0
 output application/java
 ---
 payload ++ {
-	Id: if(vars.IdDateInA !=null) vars.IdDateInA.Id else null, 
-	LastModifiedDateA: if(vars.IdDateInA !=null) vars.IdDateInA.LastModifiedDate[0] else null
+	Id: if(vars.IdDateInA != null) vars.IdDateInA.Id[0] else null, 
+	LastModifiedDateA: if(vars.IdDateInA != null) vars.IdDateInA.LastModifiedDate[0] else null
 }]]></ee:set-payload>
 						</ee:message>
 					</ee:transform>
