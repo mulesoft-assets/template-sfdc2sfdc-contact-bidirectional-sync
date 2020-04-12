@@ -140,13 +140,13 @@ The milliseconds between two different checks for updates in either Salesforce i
 
 + scheduler.startDelay `0`
 
-+ watermark.default.expression `2018-02-25T11:00:00.000Z`  
++ watermark.default.expression `"2018-02-25T11:00:00.000Z"`  
 This property is important, as it configures the starting point of the synchronization. If the 
 use case includes synchronization for every contact created from the beginning of the time, you should use a 
-date previous to any contact creation, such as `1900-01-01T08:00:00.000Z`). 
+date previous to any contact creation, such as `"1900-01-01T08:00:00.000Z"`). 
 If you want to synchronize the contacts created from now on, then use a default value according to 
 that requirement, for example, if today is April 21, 2018 and eleven o'clock in London, 
-use the `2018-04-21T11:00:00.000Z` value.
+use the `"2018-04-21T11:00:00.000Z"` value.
 
 + page.size `1000`
 
@@ -164,7 +164,7 @@ use the `2018-04-21T11:00:00.000Z` value.
 + sfdc.a.integration.user.id `A0ed000BO9T`
 
 **Note:** To find the correct *sfdc.a.integration.user.id* value, refer to the 
-example project "Salesforce Data Retrieval" in Anypoint Exchange.
+example project "Salesforce Data Retrieval" in Anypoint Exchange. You can also open the User record in Salesforce Classic mode and see this value in the browser URL.
 
 #### SalesForce Connector Configuration for Company B
 
@@ -175,7 +175,7 @@ example project "Salesforce Data Retrieval" in Anypoint Exchange.
 + sfdc.b.integration.user.id `B0ed000BO9T`
 
 **Note:** To find the correct *sfdc.b.integration.user.id* value, refer to the example 
-project "Salesforce Data Retrieval" in Anypoint Exchange.
+project "Salesforce Data Retrieval" in Anypoint Exchange. You can also open the User record in Salesforce Classic mode and see this value in the browser URL.
 
 # API Calls
 Not relevant for this use case.
