@@ -40,7 +40,7 @@ payload ++ {
 					</ee:transform>
 				</batch:step>
 				<batch:step name="findOrCreateAccountInBStep" doc:id="992f4b2d-70a8-49bd-96c3-2e1f19619b39" acceptExpression="#[p('account.sync.policy') == &quot;syncAccount&quot; and  payload.Account != null]">
-					<salesforce:query config-ref="Salesforce_Sfdc_B_config" doc:name="Query account in Salesforce B" doc:id="a0b909ce-774a-4351-a739-cce8a8460174" target="accountId">
+					<salesforce:query config-ref="Salesforce_Sfdc_B_config" doc:name="Query account in Salesforce B" doc:id="a0b909ce-774a-4351-a739-cce8a8460174" target="account">
 						<salesforce:salesforce-query>SELECT Id FROM Account WHERE Name = ':name'</salesforce:salesforce-query>
 						<salesforce:parameters><![CDATA[#[output applicaton/java
 ---
@@ -55,12 +55,12 @@ payload ++ {
 							<ee:set-variable variableName="recordPayload" ><![CDATA[%dw 2.0
 output application/java
 ---
-payload ++ {AccountId : vars.accountId[0].Id}]]></ee:set-variable>
+payload ++ {AccountId : vars.account[0].Id}]]></ee:set-variable>
 							
 						</ee:variables>
 					</ee:transform>
 					<choice doc:name="Should be a new Account created?" doc:id="a0f101c6-8f5e-4c17-bcb3-bb4c4e92fcc8" >
-						<when expression="#[vars.accountId.Id == null]" >
+						<when expression="#[vars.account.Id == null]" >
 							<ee:transform doc:name="prepare Account for insert" doc:id="e72ee4ac-bc40-44c4-9ef0-e6d15c9c51a0">
 								<ee:message>
 									<ee:set-payload><![CDATA[%dw 2.0
@@ -162,7 +162,7 @@ payload ++ {
 					</ee:transform>
 				</batch:step>
 				<batch:step name="findOrCreateAccountInAStep" doc:id="3e1ab5e1-8cef-4799-b6b8-f99953d036da" acceptExpression="#[p('account.sync.policy') == &quot;syncAccount&quot; and payload.Account != null]">
-					<salesforce:query config-ref="Salesforce_Sfdc_A_config" doc:name="Query account in Salesforce A" doc:id="445a37a9-d964-4b95-acb5-125f6fe73855" target="accountId">
+					<salesforce:query config-ref="Salesforce_Sfdc_A_config" doc:name="Query account in Salesforce A" doc:id="445a37a9-d964-4b95-acb5-125f6fe73855" target="account">
 						<salesforce:salesforce-query>SELECT Id FROM Account WHERE Name = ':name'</salesforce:salesforce-query>
 						<salesforce:parameters><![CDATA[#[output applicaton/java
 ---
@@ -177,12 +177,12 @@ payload ++ {
 							<ee:set-variable variableName="recordPayload" ><![CDATA[%dw 2.0
 output application/java
 ---
-payload ++ {AccountId : vars.accountId[0].Id}]]></ee:set-variable>
+payload ++ {AccountId : vars.account[0].Id}]]></ee:set-variable>
 							
 						</ee:variables>
 					</ee:transform>
 					<choice doc:name="Should be a new Account created?" doc:id="1ac5bfa4-1a59-4bb4-9c9b-67e61ee8711a" >
-						<when expression="#[vars.accountId.Id == null]" >
+						<when expression="#[vars.account.Id == null]" >
 							<ee:transform doc:name="prepare Account for insert" doc:id="38ef97c6-db6c-4a22-b4e0-c80d048be2e5">
 								<ee:message>
 									<ee:set-payload><![CDATA[%dw 2.0
